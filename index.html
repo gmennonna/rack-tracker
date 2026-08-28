@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RACK — Log Allenamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15171B;
+    --panel:#1E2126;
+    --panel2:#262A31;
+    --steel:#3B4048;
+    --steel-light:#4C525C;
+    --amber:#E3993C;
+    --amber-dim:#8A6528;
+    --chalk:#EDEAE2;
+    --muted:#878D97;
+    --good:#5FB86B;
+    --warn:#C1544B;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--chalk);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:640px;
+    margin:0 auto;
+    padding:20px 16px 80px;
+  }
+
+  /* ---- Header ---- */
+  .header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--steel);
+  }
+  .header h1{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:34px;
+    letter-spacing:2px;
+    margin:0;
+    color:var(--chalk);
+  }
+  .header h1 span{color:var(--amber);}
+  .header .date{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+
+  /* ---- Nav tabs (view switch) ---- */
+  .view-tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:20px;
+  }
+  .view-tab{
+    flex:1;
+    background:none;
+    border:1px solid var(--steel);
+    color:var(--muted);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:10px 8px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:all .15s ease;
+    letter-spacing:.3px;
+  }
+  .view-tab.active{
+    background:var(--panel2);
+    border-color:var(--amber-dim);
+    color:var(--chalk);
+  }
+
+  /* ---- Day selector (plate rack style) ---- */
+  .day-rack{
+    display:flex;
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .day-plate{
+    flex:1;
+    position:relative;
+    background:var(--panel);
+    border:2px solid var(--steel);
+    border-radius:var(--radius);
+    padding:14px 8px 12px;
+    text-align:center;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .day-plate:hover{border-color:var(--steel-light);}
+  .day-plate.active{
+    border-color:var(--amber);
+    background:linear-gradient(180deg, rgba(227,153,60,0.10), rgba(227,153,60,0.02));
+  }
+  .day-plate .letter{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:38px;
+    line-height:1;
+    color:var(--steel-light);
+    display:block;
+  }
+  .day-plate.active .letter{color:var(--amber);}
+  .day-plate .label{
+    display:block;
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    margin-top:4px;
+  }
+  .day-plate .done-dot{
+    position:absolute;
+    top:8px;
+    right:8px;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--good);
+    display:none;
+  }
+  .day-plate.done-today .done-dot{display:block;}
+
+  /* ---- Exercise card ---- */
+  .exercise-card{
+    background:var(--panel);
+    border:1px solid var(--steel);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:12px;
+  }
+  .exercise-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:12px;
+    gap:10px;
+  }
+  .exercise-name{
+    font-size:16px;
+    font-weight:600;
+    color:var(--chalk);
+    margin:0 0 3px;
+  }
+  .exercise-target{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .injury-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    background:rgba(193,84,75,0.14);
+    border:1px solid rgba(193,84,75,0.4);
+    color:#E08880;
+    font-size:10px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:20px;
+    white-space:nowrap;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+  }
+
+  .last-time{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    background:var(--panel2);
+    border-radius:6px;
+    padding:6px 10px;
+    margin-bottom:12px;
+  }
+  .last-time b{color:var(--chalk); font-weight:600;}
+
+  .sets-table{width:100%; border-collapse:collapse;}
+  .sets-table th{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--muted);
+    text-align:left;
+    padding-bottom:6px;
+    font-weight:600;
+  }
+  .sets-table th.num, .sets-table td.num{text-align:center; width:44px;}
+  .sets-table td{padding:4px 4px;}
+  .set-row input{
+    width:100%;
+    background:var(--panel2);
+    border:1px solid var(--steel);
+    border-radius:6px;
+    color:var(--chalk);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    padding:8px 6px;
+    text-align:center;
+  }
+  .set-row input:focus{
+    outline:none;
+    border-color:var(--amber);
+  }
+  .set-num{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--steel-light);
+    font-size:13px;
+    text-align:center;
+  }
+  .delta-badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    padding:2px 6px;
+    border-radius:4px;
+    display:inline-block;
+    margin-top:2px;
+  }
+  .delta-up{color:var(--good); background:rgba(95,184,107,0.12);}
+  .delta-flat{color:var(--muted); background:rgba(135,141,151,0.10);}
+  .delta-down{color:var(--warn); background:rgba(193,84,75,0.12);}
+
+  .note-row{
+    margin-top:10px;
+    font-size:12px;
+    color:#E08880;
+    background:rgba(193,84,75,0.08);
+    border-left:2px solid var(--warn);
+    padding:8px 10px;
+    border-radius:0 6px 6px 0;
+    line-height:1.4;
+  }
+
+  /* ---- Loading bar (signature element) ---- */
+  .plate-load{
+    display:flex;
+    gap:3px;
+    margin-top:12px;
+  }
+  .plate-seg{
+    flex:1;
+    height:6px;
+    border-radius:3px;
+    background:var(--steel);
+    transition:background .2s ease;
+  }
+  .plate-seg.filled{background:var(--amber);}
+
+  /* ---- Save button ---- */
+  .save-bar{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(0deg, var(--bg) 60%, transparent);
+    padding:18px 0 4px;
+    margin-top:8px;
+  }
+  .save-btn{
+    width:100%;
+    background:var(--amber);
+    color:#1A1305;
+    border:none;
+    border-radius:var(--radius);
+    padding:15px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:opacity .15s ease;
+  }
+  .save-btn:active{opacity:.85;}
+  .save-btn:disabled{background:var(--steel); color:var(--muted); cursor:default;}
+
+  .saved-msg{
+    text-align:center;
+    color:var(--good);
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    margin-top:8px;
+    height:14px;
+  }
+
+  /* ---- Progressi view ---- */
+  .progress-select{
+    width:100%;
+    background:var(--panel);
+    border:1px solid var(--steel);
+    color:var(--chalk);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    padding:12px;
+    border-radius:var(--radius);
+    margin-bottom:18px;
+  }
+  .chart-card{
+    background:var(--panel);
+    border:1px solid var(--steel);
+    border-radius:var(--radius);
+    padding:18px 16px 10px;
+    margin-bottom:16px;
+  }
+  .chart-title{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--muted);
+    margin-bottom:14px;
+    font-weight:600;
+  }
+  .bars{
+    display:flex;
+    align-items:flex-end;
+    gap:6px;
+    height:140px;
+    padding:0 2px;
+  }
+  .bar-col{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+    height:100%;
+    min-width:0;
+  }
+  .bar{
+    width:100%;
+    max-width:26px;
+    background:linear-gradient(180deg, var(--amber), var(--amber-dim));
+    border-radius:4px 4px 0 0;
+  }
+  .bar-val{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    margin-bottom:4px;
+    white-space:nowrap;
+  }
+  .bar-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    color:var(--muted);
+    margin-top:6px;
+    text-align:center;
+  }
+  .empty-state{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:50px 20px;
+    line-height:1.6;
+  }
+  .empty-state .big{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:28px;
+    color:var(--steel-light);
+    letter-spacing:1px;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---- Storico view ---- */
+  .history-item{
+    background:var(--panel);
+    border:1px solid var(--steel);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:10px;
+  }
+  .history-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .history-day{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:20px;
+    letter-spacing:1px;
+    color:var(--amber);
+  }
+  .history-date{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .history-ex{
+    font-size:12px;
+    color:var(--muted);
+    padding:3px 0;
+    display:flex;
+    justify-content:space-between;
+  }
+  .history-ex b{color:var(--chalk); font-weight:500;}
+  .del-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:11px;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:6px 0 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>RACK<span>.</span></h1>
+    <div class="date" id="todayDate"></div>
+  </div>
+
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="log">Oggi</button>
+    <button class="view-tab" data-view="progress">Progressi</button>
+    <button class="view-tab" data-view="history">Storico</button>
+  </div>
+
+  <!-- LOG VIEW -->
+  <div id="view-log">
+    <div class="day-rack" id="dayRack"></div>
+    <div id="exerciseList"></div>
+    <div class="save-bar">
+      <button class="save-btn" id="saveBtn">Salva sessione</button>
+      <div class="saved-msg" id="savedMsg"></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS VIEW -->
+  <div id="view-progress" style="display:none;">
+    <select class="progress-select" id="exerciseSelect"></select>
+    <div id="progressCharts"></div>
+  </div>
+
+  <!-- HISTORY VIEW -->
+  <div id="view-history" style="display:none;">
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- PROGRAM DATA ---------------- */
+const PROGRAM = {
+  A: {
+    label: 'Squat pattern',
+    exercises: [
+      { name:'Leg press', sets:4, reps:'8-10', injury:'coccige', note:'Angolazione moderata (non troppo reclinata). Ferma il range di movimento se dà fastidio al coccige.' },
+      { name:'Panca piana bilanciere', sets:4, reps:'6-8' },
+      { name:'Lat machine presa larga', sets:4, reps:'8-10' },
+      { name:'Leg extension', sets:3, reps:'12-15', injury:'coccige', note:'Esercizio isolato, basso stress su coccige — dovrebbe essere sicuro.' },
+      { name:'Alzate laterali', sets:3, reps:'12-15' },
+    ]
+  },
+  B: {
+    label: 'Hip hinge',
+    exercises: [
+      { name:'Hip thrust bilanciere', sets:4, reps:'8-10', injury:'coccige', note:'Sostituisce lo stacco da terra. Stop immediato se dà fastidio al coccige.' },
+      { name:'Military press manubri', sets:4, reps:'6-8' },
+      { name:'Rematore su panca (petto appoggiato)', sets:4, reps:'8-10' },
+      { name:'Leg curl', sets:3, reps:'10-12', injury:'adduttore', note:'Isolato, sicuro per l\'adduttore in guarigione.' },
+      { name:'Curl bicipiti + Push down tricipiti', sets:3, reps:'10-12' },
+    ]
+  },
+  C: {
+    label: 'Unilaterali / punti deboli',
+    exercises: [
+      { name:'Panca inclinata manubri', sets:4, reps:'8-10' },
+      { name:'Lat machine presa stretta', sets:4, reps:'8-10' },
+      { name:'Adductor machine', sets:3, reps:'12-15', injury:'adduttore', note:'Solo lato sinistro, o carico leggerissimo a destra — solo se autorizzato dal fisioterapista.' },
+      { name:'Face pull', sets:3, reps:'12-15' },
+      { name:'Addominali a corpo libero', sets:3, reps:'12-15', injury:'coccige', note:'Evita di sdraiarti su superficie dura senza cuscinetto.' },
+    ]
+  }
+};
+
+const STORAGE_KEY = 'rack-sessions';
+let sessions = [];
+let currentDay = 'A';
+let currentView = 'log';
+
+/* ---------------- INIT ---------------- */
+async function init(){
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+  await loadSessions();
+  renderDayRack();
+  renderExercises();
+  bindNav();
+  document.getElementById('saveBtn').addEventListener('click', saveSession);
+}
+
+async function loadSessions(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    sessions = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    sessions = [];
+  }
+}
+
+async function persistSessions(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(sessions), false);
+  }catch(e){
+    console.error('Storage error', e);
+  }
+}
+
+/* ---------------- NAV ---------------- */
+function bindNav(){
+  document.querySelectorAll('.view-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      currentView = tab.dataset.view;
+      document.getElementById('view-log').style.display = currentView==='log' ? '' : 'none';
+      document.getElementById('view-progress').style.display = currentView==='progress' ? '' : 'none';
+      document.getElementById('view-history').style.display = currentView==='history' ? '' : 'none';
+      if(currentView==='progress') renderProgressView();
+      if(currentView==='history') renderHistoryView();
+    });
+  });
+}
+
+/* ---------------- DAY RACK ---------------- */
+function isDoneToday(day){
+  const today = new Date().toDateString();
+  return sessions.some(s=>s.day===day && new Date(s.date).toDateString()===today);
+}
+
+function renderDayRack(){
+  const rack = document.getElementById('dayRack');
+  rack.innerHTML = '';
+  Object.keys(PROGRAM).forEach(day=>{
+    const el = document.createElement('div');
+    el.className = 'day-plate' + (day===currentDay ? ' active':'') + (isDoneToday(day) ? ' done-today':'');
+    el.innerHTML = `<div class="done-dot"></div><span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
+    el.addEventListener('click', ()=>{
+      currentDay = day;
+      renderDayRack();
+      renderExercises();
+    });
+    rack.appendChild(el);
+  });
+}
+
+/* ---------------- LAST SESSION LOOKUP ---------------- */
+function getLastSession(day, exerciseName){
+  const past = sessions
+    .filter(s=>s.day===day)
+    .sort((a,b)=> new Date(b.date) - new Date(a.date));
+  for(const s of past){
+    const ex = s.exercises.find(e=>e.name===exerciseName);
+    if(ex && ex.sets.some(st=>st.weight)) return { session:s, ex };
+  }
+  return null;
+}
+
+function maxWeight(sets){
+  return sets.reduce((m,s)=> Math.max(m, parseFloat(s.weight)||0), 0);
+}
+
+/* ---------------- EXERCISE LIST (LOG VIEW) ---------------- */
+function renderExercises(){
+  const container = document.getElementById('exerciseList');
+  container.innerHTML = '';
+  document.getElementById('savedMsg').textContent = '';
+
+  PROGRAM[currentDay].exercises.forEach((ex, exIdx)=>{
+    const card = document.createElement('div');
+    card.className = 'exercise-card';
+    card.dataset.exIdx = exIdx;
+
+    const last = getLastSession(currentDay, ex.name);
+    let lastHtml = '';
+    if(last){
+      const w = maxWeight(last.ex.sets);
+      const dateStr = new Date(last.session.date).toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+      lastHtml = `<div class="last-time">Ultima volta (${dateStr}): <b>${w} kg</b> × ${last.ex.sets.length} serie</div>`;
+    } else {
+      lastHtml = `<div class="last-time">Prima registrazione per questo esercizio</div>`;
+    }
+
+    let rows = '';
+    for(let i=0;i<ex.sets;i++){
+      rows += `
+        <tr class="set-row">
+          <td class="set-num">${i+1}</td>
+          <td><input type="number" inputmode="decimal" class="w-input" placeholder="kg" data-set="${i}" min="0" step="0.5"></td>
+          <td><input type="number" inputmode="numeric" class="r-input" placeholder="reps" data-set="${i}" min="0"></td>
+        </tr>`;
+    }
+
+    card.innerHTML = `
+      <div class="exercise-head">
+        <div>
+          <p class="exercise-name">${ex.name}</p>
+          <div class="exercise-target">Target: ${ex.sets} × ${ex.reps}</div>
+        </div>
+        ${ex.injury ? `<span class="injury-badge">⚠ ${ex.injury}</span>` : ''}
+      </div>
+      ${lastHtml}
+      <table class="sets-table">
+        <thead><tr><th class="num">Set</th><th>Peso</th><th>Reps</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="plate-load" id="load-${exIdx}"></div>
+      ${ex.note ? `<div class="note-row">${ex.note}</div>` : ''}
+    `;
+
+    container.appendChild(card);
+
+    // wire up loading bar updates
+    const inputs = card.querySelectorAll('.w-input, .r-input');
+    const loadBar = card.querySelector(`#load-${exIdx}`);
+    for(let i=0;i<ex.sets;i++){
+      const seg = document.createElement('div');
+      seg.className = 'plate-seg';
+      loadBar.appendChild(seg);
+    }
+    function updateLoad(){
+      const wInputs = card.querySelectorAll('.w-input');
+      const segs = loadBar.querySelectorAll('.plate-seg');
+      wInputs.forEach((inp, i)=>{
+        segs[i].classList.toggle('filled', !!inp.value && parseFloat(inp.value) > 0);
+      });
+    }
+    inputs.forEach(inp=> inp.addEventListener('input', updateLoad));
+  });
+}
+
+/* ---------------- SAVE SESSION ---------------- */
+async function saveSession(){
+  const cards = document.querySelectorAll('.exercise-card');
+  const exercises = [];
+  let anyData = false;
+
+  cards.forEach(card=>{
+    const exIdx = parseInt(card.dataset.exIdx);
+    const exDef = PROGRAM[currentDay].exercises[exIdx];
+    const wInputs = card.querySelectorAll('.w-input');
+    const rInputs = card.querySelectorAll('.r-input');
+    const sets = [];
+    wInputs.forEach((inp, i)=>{
+      const weight = inp.value ? parseFloat(inp.value) : null;
+      const reps = rinputs[i].value ? parseInt(rInputs[i].value) : null;
+      if(weight || reps) anyData = true;
+      sets.push({ weight, reps });
+    });
+    exercises.push({ name: exDef.name, sets });
+  });
+
+  if(!anyData){
+    const msg = document.getElementById('savedMsg');
+    msg.style.color = 'var(--warn)';
+    msg.textContent = 'Inserisci almeno un peso o una ripetizione prima di salvare';
+    setTimeout(()=>{ msg.textContent=''; msg.style.color='var(--good)'; }, 2500);
+    return;
+  }
+
+  sessions.push({
+    date: new Date().toISOString(),
+    day: currentDay,
+    exercises
+  });
+
+  await persistSessions();
+
+  document.getElementById('savedMsg').style.color = 'var(--good)';
+  document.getElementById('savedMsg').textContent = '✓ Sessione salvata';
+  renderDayRack();
+  setTimeout(()=>{ document.getElementById('savedMsg').textContent=''; }, 2500);
+}
+
+/* ---------------- PROGRESS VIEW ---------------- */
+function allExerciseNames(){
+  const names = [];
+  Object.values(PROGRAM).forEach(d=> d.exercises.forEach(e=>{ if(!names.includes(e.name)) names.push(e.name); }));
+  return names;
+}
+
+function renderProgressView(){
+  const select = document.getElementById('exerciseSelect');
+  if(select.options.length===0){
+    allExerciseNames().forEach(name=>{
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', renderChart);
+  }
+  renderChart();
+}
+
+function renderChart(){
+  const select = document.getElementById('exerciseSelect');
+  const name = select.value || select.options[0]?.value;
+  const container = document.getElementById('progressCharts');
+  container.innerHTML = '';
+
+  if(!name){
+    container.innerHTML = `<div class="empty-state"><span class="big">Niente da mostrare</span>Registra almeno una sessione nella tab "Oggi" per vedere qui i tuoi progressi.</div>`;
+    return;
+  }
+
+  const points = sessions
+    .filter(s=> s.exercises.some(e=>e.name===name && e.sets.some(st=>st.weight)))
+    .sort((a,b)=> new Date(a.date)-new Date(b.date))
+    .map(s=>{
+      const ex = s.exercises.find(e=>e.name===name);
+      return { date: s.date, weight: maxWeight(ex.sets) };
+    });
+
+  if(points.length===0){
+    container.innerHTML = `<div class="empty-state"><span class="big">Nessun dato</span>Non hai ancora registrato pesi per questo esercizio.</div>`;
+    return;
+  }
+
+  const maxW = Math.max(...points.map(p=>p.weight), 1);
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+  const last8 = points.slice(-8);
+
+  let bars = '';
+  last8.forEach(p=>{
+    const h = Math.max(6, (p.weight / maxW) * 100);
+    const d = new Date(p.date).toLocaleDateString('it-IT',{day:'numeric',month:'numeric'});
+    bars += `
+      <div class="bar-col">
+        <div class="bar-val">${p.weight}</div>
+        <div class="bar" style="height:${h}%"></div>
+        <div class="bar-label">${d}</div>
+      </div>`;
+  });
+
+  const first = points[0].weight;
+  const latest = points[points.length-1].weight;
+  const diff = (latest - first);
+  const diffLabel = diff > 0 ? `+${diff} kg dal primo log` : diff < 0 ? `${diff} kg dal primo log` : 'invariato dal primo log';
+  const diffClass = diff > 0 ? 'delta-up' : diff < 0 ? 'delta-down' : 'delta-flat';
+
+  card.innerHTML = `
+    <div class="chart-title">${name} — carico massimo per sessione</div>
+    <div class="bars">${bars}</div>
+    <div style="margin-top:14px;"><span class="delta-badge ${diffClass}">${diffLabel}</span></div>
+  `;
+  container.appendChild(card);
+}
+
+/* ---------------- HISTORY VIEW ---------------- */
+function renderHistoryView(){
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+
+  if(sessions.length===0){
+    list.innerHTML = `<div class="empty-state"><span class="big">Storico vuoto</span>Le sessioni salvate compariranno qui.</div>`;
+    return;
+  }
+
+  const sorted = [...sessions].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  sorted.forEach((s)=>{
+    const realIdx = sessions.indexOf(s);
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const dateStr = new Date(s.date).toLocaleDateString('it-IT',{weekday:'long', day:'numeric', month:'long'});
+
+    let exRows = '';
+    s.exercises.forEach(ex=>{
+      const w = maxWeight(ex.sets);
+      const setsWithData = ex.sets.filter(st=>st.weight).length;
+      if(setsWithData===0) return;
+      exRows += `<div class="history-ex"><span>${ex.name}</span><b>${w} kg × ${setsWithData}</b></div>`;
+    });
+
+    item.innerHTML = `
+      <div class="history-head">
+        <span class="history-day">Giorno ${s.day}</span>
+        <span class="history-date">${dateStr}</span>
+      </div>
+      ${exRows}
+      <button class="del-btn" data-idx="${realIdx}">Elimina sessione</button>
+    `;
+    list.appendChild(item);
+  });
+
+  list.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const idx = parseInt(btn.dataset.idx);
+      sessions.splice(idx,1);
+      await persistSessions();
+      renderHistoryView();
+      renderDayRack();
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>
