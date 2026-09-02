@@ -8,37 +8,43 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<meta name="theme-color" content="#15171B">
+<meta name="theme-color" content="#171B34">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#15171B;
-    --panel:#1E2126;
-    --panel2:#262A31;
-    --steel:#3B4048;
-    --steel-light:#4C525C;
-    --amber:#E3993C;
-    --amber-dim:#8A6528;
-    --chalk:#EDEAE2;
-    --muted:#878D97;
-    --good:#5FB86B;
-    --warn:#C1544B;
-    --radius:10px;
+    --bg:#171B34;
+    --bg2:#1F2444;
+    --card:#242A4E;
+    --card2:#2C3358;
+    --stroke:#343B66;
+    --text:#F5F6FA;
+    --muted:#9498BE;
+    --coral:#FF7F6B;
+    --coral-dim:#B85B4F;
+    --purple:#8C7DFF;
+    --purple-dim:#5F55B0;
+    --mint:#3FD8B0;
+    --mint-dim:#2A9A80;
+    --yellow:#FFCE54;
+    --warn:#FF5F6D;
+    --radius:22px;
+    --radius-sm:14px;
+    --radius-pill:999px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--bg);
-    color:var(--chalk);
-    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
   .app{
     max-width:640px;
     margin:0 auto;
-    padding:20px 16px 80px;
+    padding:22px 16px 110px;
   }
 
   /* ---- Header ---- */
@@ -46,285 +52,330 @@
     display:flex;
     align-items:baseline;
     justify-content:space-between;
-    margin-bottom:18px;
-    padding-bottom:14px;
-    border-bottom:1px solid var(--steel);
+    margin-bottom:20px;
   }
   .header h1{
-    font-family:'Bebas Neue', sans-serif;
-    font-size:34px;
-    letter-spacing:2px;
+    font-family:'Poppins', sans-serif;
+    font-weight:800;
+    font-size:26px;
+    letter-spacing:.5px;
     margin:0;
-    color:var(--chalk);
+    color:var(--text);
   }
-  .header h1 span{color:var(--amber);}
+  .header h1 span{color:var(--coral);}
   .header .date{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
+    font-size:11px;
     color:var(--muted);
     text-transform:uppercase;
     letter-spacing:1px;
-  }
-
-  /* ---- Nav tabs (view switch) ---- */
-  .view-tabs{
-    display:flex;
-    gap:6px;
-    margin-bottom:20px;
-  }
-  .view-tab{
-    flex:1;
-    background:none;
-    border:1px solid var(--steel);
-    color:var(--muted);
-    font-family:'IBM Plex Sans', sans-serif;
     font-weight:600;
-    font-size:13px;
-    padding:10px 8px;
-    border-radius:var(--radius);
-    cursor:pointer;
-    transition:all .15s ease;
-    letter-spacing:.3px;
-  }
-  .view-tab.active{
-    background:var(--panel2);
-    border-color:var(--amber-dim);
-    color:var(--chalk);
   }
 
-  /* ---- Day selector (plate rack style) ---- */
+  /* ---- Day tiles (colorful, reference-inspired) ---- */
   .day-rack{
     display:flex;
     gap:10px;
-    margin-bottom:22px;
+    margin-bottom:20px;
   }
   .day-plate{
     flex:1;
     position:relative;
-    background:var(--panel);
-    border:2px solid var(--steel);
     border-radius:var(--radius);
-    padding:14px 8px 12px;
+    padding:16px 8px 14px;
     text-align:center;
     cursor:pointer;
-    transition:all .15s ease;
-  }
-  .day-plate:hover{border-color:var(--steel-light);}
-  .day-plate.active{
-    border-color:var(--amber);
-    background:linear-gradient(180deg, rgba(227,153,60,0.10), rgba(227,153,60,0.02));
+    transition:all .18s ease;
+    border:none;
   }
   .day-plate .letter{
-    font-family:'Bebas Neue', sans-serif;
-    font-size:38px;
+    font-weight:800;
+    font-size:26px;
     line-height:1;
-    color:var(--steel-light);
     display:block;
   }
-  .day-plate.active .letter{color:var(--amber);}
   .day-plate .label{
     display:block;
-    font-size:10px;
-    color:var(--muted);
+    font-size:9.5px;
     text-transform:uppercase;
-    letter-spacing:.8px;
-    margin-top:4px;
+    letter-spacing:.5px;
+    margin-top:5px;
+    font-weight:600;
+    opacity:.85;
   }
   .day-plate .done-dot{
     position:absolute;
-    top:8px;
-    right:8px;
+    top:10px;
+    right:10px;
     width:7px;
     height:7px;
     border-radius:50%;
-    background:var(--good);
+    background:#fff;
     display:none;
   }
   .day-plate.done-today .done-dot{display:block;}
 
+  .day-a{ background:rgba(255,127,107,0.14); color:var(--coral); box-shadow:none; }
+  .day-a.active{ background:linear-gradient(160deg, var(--coral), var(--coral-dim)); color:#1A0F0C; box-shadow:0 10px 22px rgba(255,127,107,0.35); }
+  .day-b{ background:rgba(140,125,255,0.14); color:var(--purple); box-shadow:none; }
+  .day-b.active{ background:linear-gradient(160deg, var(--purple), var(--purple-dim)); color:#12102B; box-shadow:0 10px 22px rgba(140,125,255,0.35); }
+  .day-c{ background:rgba(63,216,176,0.14); color:var(--mint); box-shadow:none; }
+  .day-c.active{ background:linear-gradient(160deg, var(--mint), var(--mint-dim)); color:#0B241D; box-shadow:0 10px 22px rgba(63,216,176,0.35); }
+
+  /* ---- Edit banner ---- */
+  .edit-banner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(140,125,255,0.14);
+    border-radius:var(--radius-sm);
+    padding:10px 14px;
+    margin-bottom:12px;
+    font-size:12px;
+    color:var(--text);
+  }
+  .edit-banner button{
+    background:none;
+    border:none;
+    color:var(--purple);
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:'Poppins', sans-serif;
+  }
+
   /* ---- Exercise card ---- */
   .exercise-card{
-    background:var(--panel);
-    border:1px solid var(--steel);
+    background:var(--card);
     border-radius:var(--radius);
     padding:16px;
-    margin-bottom:12px;
+    margin-bottom:10px;
   }
   .exercise-head{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    margin-bottom:12px;
+    margin-bottom:10px;
     gap:10px;
   }
   .exercise-name{
-    font-size:16px;
+    font-size:15px;
     font-weight:600;
-    color:var(--chalk);
+    color:var(--text);
     margin:0 0 3px;
   }
   .exercise-target{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
+    font-size:11.5px;
     color:var(--muted);
+    font-weight:500;
   }
   .injury-badge{
     display:inline-flex;
     align-items:center;
     gap:4px;
-    background:rgba(193,84,75,0.14);
-    border:1px solid rgba(193,84,75,0.4);
-    color:#E08880;
-    font-size:10px;
-    font-weight:600;
-    padding:3px 8px;
-    border-radius:20px;
+    background:rgba(255,95,109,0.16);
+    color:var(--warn);
+    font-size:9.5px;
+    font-weight:700;
+    padding:4px 9px;
+    border-radius:var(--radius-pill);
     white-space:nowrap;
     letter-spacing:.3px;
     text-transform:uppercase;
   }
 
   .last-time{
-    font-family:'IBM Plex Mono', monospace;
     font-size:11px;
     color:var(--muted);
-    background:var(--panel2);
-    border-radius:6px;
-    padding:6px 10px;
-    margin-bottom:12px;
+    background:var(--card2);
+    border-radius:10px;
+    padding:7px 10px;
+    margin-bottom:8px;
+    font-weight:500;
   }
-  .last-time b{color:var(--chalk); font-weight:600;}
+  .last-time b{color:var(--text); font-weight:700;}
+  .record-line{ color:var(--yellow); }
+  .record-line b{ color:var(--yellow); }
 
-  .sets-table{width:100%; border-collapse:collapse;}
+  .sets-table{width:100%; border-collapse:collapse; margin-top:10px;}
   .sets-table th{
-    font-size:10px;
+    font-size:9.5px;
     text-transform:uppercase;
-    letter-spacing:.6px;
+    letter-spacing:.5px;
     color:var(--muted);
     text-align:left;
     padding-bottom:6px;
     font-weight:600;
   }
-  .sets-table th.num, .sets-table td.num{text-align:center; width:44px;}
+  .sets-table th.num, .sets-table td.num{text-align:center; width:40px;}
   .sets-table td{padding:4px 4px;}
   .set-row input{
     width:100%;
-    background:var(--panel2);
-    border:1px solid var(--steel);
-    border-radius:6px;
-    color:var(--chalk);
-    font-family:'IBM Plex Mono', monospace;
+    background:var(--card2);
+    border:1.5px solid transparent;
+    border-radius:var(--radius-sm);
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
     font-size:14px;
-    padding:8px 6px;
+    padding:9px 6px;
     text-align:center;
   }
   .set-row input:focus{
     outline:none;
-    border-color:var(--amber);
+    border-color:var(--coral);
   }
   .set-num{
-    font-family:'IBM Plex Mono', monospace;
-    color:var(--steel-light);
+    color:var(--muted);
+    font-weight:700;
     font-size:13px;
     text-align:center;
   }
   .delta-badge{
-    font-family:'IBM Plex Mono', monospace;
     font-size:11px;
-    font-weight:600;
-    padding:2px 6px;
-    border-radius:4px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:var(--radius-pill);
     display:inline-block;
     margin-top:2px;
   }
-  .delta-up{color:var(--good); background:rgba(95,184,107,0.12);}
-  .delta-flat{color:var(--muted); background:rgba(135,141,151,0.10);}
-  .delta-down{color:var(--warn); background:rgba(193,84,75,0.12);}
+  .delta-up{color:var(--mint); background:rgba(63,216,176,0.14);}
+  .delta-flat{color:var(--muted); background:rgba(148,152,190,0.14);}
+  .delta-down{color:var(--warn); background:rgba(255,95,109,0.14);}
 
   .note-row{
     margin-top:10px;
-    font-size:12px;
-    color:#E08880;
-    background:rgba(193,84,75,0.08);
-    border-left:2px solid var(--warn);
+    font-size:11.5px;
+    color:var(--warn);
+    background:rgba(255,95,109,0.10);
     padding:8px 10px;
-    border-radius:0 6px 6px 0;
+    border-radius:10px;
     line-height:1.4;
+    font-weight:500;
   }
 
-  /* ---- Loading bar (signature element) ---- */
+  /* ---- Loading bar ---- */
   .plate-load{
     display:flex;
     gap:3px;
-    margin-top:12px;
+    margin-top:10px;
   }
   .plate-seg{
     flex:1;
-    height:6px;
+    height:5px;
     border-radius:3px;
-    background:var(--steel);
+    background:var(--card2);
     transition:background .2s ease;
   }
-  .plate-seg.filled{background:var(--amber);}
+  .plate-seg.filled{background:var(--coral);}
+
+  /* ---- Note toggle (collapsed by default) ---- */
+  .note-toggle{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    padding:6px 2px;
+    font-family:'Poppins', sans-serif;
+  }
+  .note-field-wrap{
+    margin:4px 0 6px;
+  }
+  .note-field{
+    width:100%;
+    background:var(--card);
+    border:1.5px solid transparent;
+    border-radius:var(--radius-sm);
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
+    font-size:13px;
+    padding:11px 12px;
+    resize:vertical;
+    min-height:44px;
+  }
+  .note-field:focus{ outline:none; border-color:var(--purple); }
 
   /* ---- Save button ---- */
   .save-bar{
     position:sticky;
     bottom:0;
-    background:linear-gradient(0deg, var(--bg) 60%, transparent);
-    padding:18px 0 4px;
-    margin-top:8px;
+    background:linear-gradient(0deg, var(--bg) 65%, transparent);
+    padding:16px 0 4px;
+    margin-top:6px;
   }
   .save-btn{
     width:100%;
-    background:var(--amber);
-    color:#1A1305;
+    background:linear-gradient(120deg, var(--mint), var(--mint-dim));
+    color:#08211A;
     border:none;
-    border-radius:var(--radius);
-    padding:15px;
-    font-family:'IBM Plex Sans', sans-serif;
+    border-radius:var(--radius-pill);
+    padding:16px;
+    font-family:'Poppins', sans-serif;
     font-weight:700;
-    font-size:14px;
-    letter-spacing:.4px;
-    text-transform:uppercase;
+    font-size:14.5px;
+    letter-spacing:.2px;
     cursor:pointer;
-    transition:opacity .15s ease;
+    box-shadow:0 10px 22px rgba(63,216,176,0.30);
   }
-  .save-btn:active{opacity:.85;}
-  .save-btn:disabled{background:var(--steel); color:var(--muted); cursor:default;}
+  .save-btn:active{opacity:.88;}
 
   .saved-msg{
     text-align:center;
-    color:var(--good);
+    color:var(--mint);
     font-size:12px;
-    font-family:'IBM Plex Mono', monospace;
-    margin-top:8px;
+    font-weight:600;
+    margin-top:10px;
     height:14px;
   }
 
   /* ---- Progressi view ---- */
+  .stats-toggle{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+    background:var(--card);
+    border-radius:var(--radius-pill);
+    padding:5px;
+  }
+  .stats-toggle-btn{
+    flex:1;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    font-size:12px;
+    padding:9px 8px;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+  }
+  .stats-toggle-btn.active{
+    background:var(--coral);
+    color:#1A0F0C;
+  }
   .progress-select{
     width:100%;
-    background:var(--panel);
-    border:1px solid var(--steel);
-    color:var(--chalk);
-    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--card);
+    border:none;
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
+    font-weight:500;
     font-size:14px;
-    padding:12px;
-    border-radius:var(--radius);
-    margin-bottom:18px;
+    padding:13px;
+    border-radius:var(--radius-sm);
+    margin-bottom:16px;
   }
   .chart-card{
-    background:var(--panel);
-    border:1px solid var(--steel);
+    background:var(--card);
     border-radius:var(--radius);
-    padding:18px 16px 10px;
-    margin-bottom:16px;
+    padding:18px 16px 14px;
+    margin-bottom:14px;
   }
   .chart-title{
     font-size:11px;
     text-transform:uppercase;
-    letter-spacing:.6px;
+    letter-spacing:.5px;
     color:var(--muted);
     margin-bottom:14px;
     font-weight:600;
@@ -333,7 +384,7 @@
     display:flex;
     align-items:flex-end;
     gap:6px;
-    height:140px;
+    height:130px;
     padding:0 2px;
   }
   .bar-col{
@@ -347,23 +398,23 @@
   }
   .bar{
     width:100%;
-    max-width:26px;
-    background:linear-gradient(180deg, var(--amber), var(--amber-dim));
-    border-radius:4px 4px 0 0;
+    max-width:24px;
+    background:linear-gradient(180deg, var(--coral), var(--coral-dim));
+    border-radius:8px 8px 3px 3px;
   }
   .bar-val{
-    font-family:'IBM Plex Mono', monospace;
     font-size:10px;
+    font-weight:700;
     color:var(--muted);
     margin-bottom:4px;
     white-space:nowrap;
   }
   .bar-label{
-    font-family:'IBM Plex Mono', monospace;
     font-size:9px;
     color:var(--muted);
     margin-top:6px;
     text-align:center;
+    font-weight:500;
   }
   .empty-state{
     text-align:center;
@@ -373,20 +424,18 @@
     line-height:1.6;
   }
   .empty-state .big{
-    font-family:'Bebas Neue', sans-serif;
-    font-size:28px;
-    color:var(--steel-light);
-    letter-spacing:1px;
+    font-weight:700;
+    font-size:20px;
+    color:var(--text);
     display:block;
     margin-bottom:8px;
   }
 
   /* ---- Storico view ---- */
   .history-item{
-    background:var(--panel);
-    border:1px solid var(--steel);
+    background:var(--card);
     border-radius:var(--radius);
-    padding:14px 16px;
+    padding:15px 16px;
     margin-bottom:10px;
   }
   .history-head{
@@ -396,15 +445,14 @@
     margin-bottom:8px;
   }
   .history-day{
-    font-family:'Bebas Neue', sans-serif;
-    font-size:20px;
-    letter-spacing:1px;
-    color:var(--amber);
+    font-weight:700;
+    font-size:15px;
+    color:var(--text);
   }
   .history-date{
-    font-family:'IBM Plex Mono', monospace;
     font-size:11px;
     color:var(--muted);
+    font-weight:500;
   }
   .history-ex{
     font-size:12px;
@@ -412,241 +460,93 @@
     padding:3px 0;
     display:flex;
     justify-content:space-between;
+    font-weight:500;
   }
-  .history-ex b{color:var(--chalk); font-weight:500;}
-  .del-btn{
-    background:none;
-    border:none;
-    color:var(--muted);
-    font-size:11px;
-    cursor:pointer;
-    text-decoration:underline;
-    padding:6px 0 0;
-  }
-
-  /* ---- Rest timer ---- */
-  .timer-fab{
-    position:fixed;
-    bottom:90px;
-    right:20px;
-    width:56px;
-    height:56px;
-    border-radius:50%;
-    background:var(--amber);
-    color:#1A1305;
-    border:none;
-    font-size:22px;
-    font-weight:700;
-    box-shadow:0 4px 14px rgba(0,0,0,0.45);
-    cursor:pointer;
-    z-index:60;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:'IBM Plex Mono', monospace;
-  }
-  .timer-panel{
-    position:fixed;
-    bottom:156px;
-    right:20px;
-    background:var(--panel);
-    border:1px solid var(--steel);
-    border-radius:var(--radius);
-    padding:16px;
-    width:220px;
-    box-shadow:0 8px 28px rgba(0,0,0,0.55);
-    z-index:60;
-  }
-  .timer-display{
-    font-family:'Bebas Neue', sans-serif;
-    font-size:46px;
-    text-align:center;
-    color:var(--amber);
-    letter-spacing:2px;
-    margin-bottom:12px;
-    transition:color .2s ease;
-  }
-  .timer-display.timer-done{ color:var(--good); }
-  .timer-presets{
-    display:flex;
-    gap:6px;
-    margin-bottom:12px;
-  }
-  .timer-preset{
-    flex:1;
-    background:var(--panel2);
-    border:1px solid var(--steel);
-    color:var(--chalk);
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    padding:6px 0;
-    border-radius:6px;
-    cursor:pointer;
-  }
-  .timer-preset.active{ border-color:var(--amber); color:var(--amber); }
-  .timer-controls{
-    display:flex;
-    gap:6px;
-    align-items:center;
-    margin-bottom:10px;
-  }
-  .timer-btn{
-    flex:1;
-    background:var(--panel2);
-    border:1px solid var(--steel);
-    color:var(--chalk);
-    font-family:'IBM Plex Sans', sans-serif;
-    font-weight:600;
-    font-size:13px;
-    padding:10px 0;
-    border-radius:8px;
-    cursor:pointer;
-  }
-  .timer-btn-primary{
-    background:var(--amber);
-    color:#1A1305;
-    border:none;
-  }
-  .timer-reset-link{
-    display:block;
-    width:100%;
-    background:none;
-    border:none;
-    color:var(--muted);
-    font-size:11px;
-    text-decoration:underline;
-    cursor:pointer;
-    padding:4px 0 0;
-    text-align:center;
-    font-family:'IBM Plex Sans', sans-serif;
-  }
-
-  /* ---- Edit banner ---- */
-  .edit-banner{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    background:rgba(227,153,60,0.10);
-    border:1px solid var(--amber-dim);
-    border-radius:var(--radius);
-    padding:10px 14px;
-    margin-bottom:14px;
-    font-size:12px;
-    color:var(--chalk);
-  }
-  .edit-banner button{
-    background:none;
-    border:none;
-    color:var(--amber);
-    font-size:12px;
-    font-weight:600;
-    text-decoration:underline;
-    cursor:pointer;
-    font-family:'IBM Plex Sans', sans-serif;
-  }
-
-  /* ---- Note field ---- */
-  .note-field-wrap{
-    margin-top:4px;
-    margin-bottom:4px;
-  }
-  .note-field-label{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.5px;
-    color:var(--muted);
-    margin-bottom:6px;
-    display:block;
-  }
-  .note-field{
-    width:100%;
-    background:var(--panel);
-    border:1px solid var(--steel);
-    border-radius:var(--radius);
-    color:var(--chalk);
-    font-family:'IBM Plex Sans', sans-serif;
-    font-size:13px;
-    padding:10px 12px;
-    resize:vertical;
-    min-height:44px;
-  }
-  .note-field:focus{ outline:none; border-color:var(--amber); }
-
-  /* ---- Record line & PR badge ---- */
-  .record-line{ color:var(--amber); }
+  .history-ex b{color:var(--text); font-weight:600;}
   .pr-badge{
     display:inline-flex;
     align-items:center;
     gap:3px;
-    background:rgba(227,153,60,0.16);
-    border:1px solid var(--amber-dim);
-    color:var(--amber);
-    font-size:10px;
+    background:rgba(255,206,84,0.16);
+    color:var(--yellow);
+    font-size:9.5px;
     font-weight:700;
-    padding:2px 7px;
-    border-radius:20px;
-    letter-spacing:.3px;
-    text-transform:uppercase;
+    padding:2px 8px;
+    border-radius:var(--radius-pill);
     margin-left:6px;
   }
-
-  /* ---- Session note in history ---- */
   .history-note{
     font-size:12px;
     color:var(--muted);
     font-style:italic;
     margin-top:8px;
     padding-top:8px;
-    border-top:1px solid var(--steel);
+    border-top:1px solid var(--card2);
   }
   .history-actions{
     display:flex;
-    gap:14px;
-    margin-top:8px;
+    gap:16px;
+    margin-top:10px;
   }
   .edit-btn{
     background:none;
     border:none;
-    color:var(--amber);
-    font-size:11px;
-    cursor:pointer;
-    text-decoration:underline;
-    padding:0;
-    font-family:'IBM Plex Sans', sans-serif;
-  }
-
-  /* ---- Stats mode toggle ---- */
-  .stats-toggle{
-    display:flex;
-    gap:6px;
-    margin-bottom:16px;
-  }
-  .stats-toggle-btn{
-    flex:1;
-    background:none;
-    border:1px solid var(--steel);
-    color:var(--muted);
-    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--purple);
+    font-size:11.5px;
     font-weight:600;
-    font-size:12px;
-    padding:9px 8px;
-    border-radius:var(--radius);
     cursor:pointer;
+    padding:0;
+    font-family:'Poppins', sans-serif;
   }
-  .stats-toggle-btn.active{
-    background:var(--panel2);
-    border-color:var(--amber-dim);
-    color:var(--chalk);
+  .del-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:11.5px;
+    font-weight:600;
+    cursor:pointer;
+    padding:0;
+    font-family:'Poppins', sans-serif;
   }
 
-  /* ---- Program editor ---- */
+  /* ---- Program editor (accordion) ---- */
   .program-ex-card{
-    background:var(--panel);
-    border:1px solid var(--steel);
+    background:var(--card);
     border-radius:var(--radius);
-    padding:14px;
     margin-bottom:10px;
+    overflow:hidden;
   }
+  .program-ex-summary{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 16px;
+    cursor:pointer;
+  }
+  .program-ex-summary-text{
+    font-size:14px;
+    font-weight:600;
+    color:var(--text);
+  }
+  .program-ex-summary-sub{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+    font-weight:500;
+  }
+  .program-ex-chevron{
+    width:18px;
+    height:18px;
+    color:var(--muted);
+    flex-shrink:0;
+    transition:transform .2s ease;
+  }
+  .program-ex-card.expanded .program-ex-chevron{ transform:rotate(180deg); }
+  .program-ex-body{
+    display:none;
+    padding:0 16px 16px;
+  }
+  .program-ex-card.expanded .program-ex-body{ display:block; }
   .program-field-row{
     display:flex;
     gap:8px;
@@ -660,40 +560,41 @@
     gap:4px;
   }
   .program-field label{
-    font-size:10px;
+    font-size:9.5px;
     text-transform:uppercase;
     letter-spacing:.4px;
     color:var(--muted);
+    font-weight:600;
   }
   .program-field input, .program-field textarea{
-    background:var(--panel2);
-    border:1px solid var(--steel);
-    border-radius:6px;
-    color:var(--chalk);
-    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--card2);
+    border:1.5px solid transparent;
+    border-radius:var(--radius-sm);
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
     font-size:13px;
-    padding:8px 10px;
+    padding:9px 10px;
   }
-  .program-field input:focus, .program-field textarea:focus{ outline:none; border-color:var(--amber); }
+  .program-field input:focus, .program-field textarea:focus{ outline:none; border-color:var(--purple); }
   .program-remove-btn{
     background:none;
     border:none;
     color:var(--warn);
-    font-size:11px;
+    font-size:11.5px;
+    font-weight:600;
     cursor:pointer;
-    text-decoration:underline;
     padding:2px 0 0;
-    font-family:'IBM Plex Sans', sans-serif;
+    font-family:'Poppins', sans-serif;
   }
   .program-add-btn{
     width:100%;
-    background:var(--panel2);
-    border:1px dashed var(--steel-light);
-    color:var(--chalk);
-    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--card);
+    border:1.5px dashed var(--stroke);
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
     font-weight:600;
     font-size:13px;
-    padding:12px;
+    padding:14px;
     border-radius:var(--radius);
     cursor:pointer;
     margin-bottom:16px;
@@ -704,20 +605,159 @@
     background:none;
     border:none;
     color:var(--muted);
-    font-size:11px;
-    text-decoration:underline;
+    font-size:11.5px;
+    font-weight:600;
     cursor:pointer;
-    padding:6px 0 0;
+    padding:8px 0 0;
     text-align:center;
-    font-family:'IBM Plex Sans', sans-serif;
+    font-family:'Poppins', sans-serif;
   }
   .program-saved-msg{
     text-align:center;
-    color:var(--good);
+    color:var(--mint);
     font-size:12px;
-    font-family:'IBM Plex Mono', monospace;
-    margin-top:8px;
+    font-weight:600;
+    margin-top:10px;
     height:14px;
+  }
+
+  /* ---- Rest timer ---- */
+  .timer-fab{
+    position:fixed;
+    bottom:104px;
+    right:20px;
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:linear-gradient(150deg, var(--coral), var(--coral-dim));
+    color:#1A0F0C;
+    border:none;
+    font-size:21px;
+    font-weight:700;
+    box-shadow:0 10px 22px rgba(255,127,107,0.40);
+    cursor:pointer;
+    z-index:60;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .timer-panel{
+    position:fixed;
+    bottom:168px;
+    right:20px;
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:16px;
+    width:220px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.45);
+    z-index:60;
+  }
+  .timer-display{
+    font-weight:800;
+    font-size:42px;
+    text-align:center;
+    color:var(--coral);
+    letter-spacing:1px;
+    margin-bottom:12px;
+  }
+  .timer-display.timer-done{ color:var(--mint); }
+  .timer-presets{
+    display:flex;
+    gap:6px;
+    margin-bottom:12px;
+  }
+  .timer-preset{
+    flex:1;
+    background:var(--card2);
+    border:1.5px solid transparent;
+    color:var(--text);
+    font-size:11px;
+    font-weight:600;
+    padding:7px 0;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+  .timer-preset.active{ border-color:var(--coral); color:var(--coral); }
+  .timer-controls{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .timer-btn{
+    flex:1;
+    background:var(--card2);
+    border:none;
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:10px 0;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+  .timer-btn-primary{
+    background:linear-gradient(120deg, var(--coral), var(--coral-dim));
+    color:#1A0F0C;
+  }
+  .timer-reset-link{
+    display:block;
+    width:100%;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:600;
+    cursor:pointer;
+    padding:4px 0 0;
+    text-align:center;
+    font-family:'Poppins', sans-serif;
+  }
+
+  /* ---- Bottom nav ---- */
+  .bottom-nav{
+    position:fixed;
+    left:16px;
+    right:16px;
+    bottom:16px;
+    max-width:608px;
+    margin:0 auto;
+    background:#F4F5FA;
+    border-radius:var(--radius-pill);
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    padding:10px 8px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.35);
+    z-index:70;
+  }
+  .nav-btn{
+    background:none;
+    border:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    cursor:pointer;
+    padding:6px 10px;
+    border-radius:var(--radius-pill);
+    color:#8A8FB0;
+    font-family:'Poppins', sans-serif;
+  }
+  .nav-btn svg{ width:20px; height:20px; }
+  .nav-btn span{ font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+  .nav-btn.active{ color:#1A1F3D; }
+  .nav-btn.active .nav-icon-wrap{
+    background:var(--coral);
+    color:#1A0F0C;
+  }
+  .nav-icon-wrap{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
 </style>
 </head>
@@ -729,13 +769,6 @@
     <div class="date" id="todayDate"></div>
   </div>
 
-  <div class="view-tabs">
-    <button class="view-tab active" data-view="log">Oggi</button>
-    <button class="view-tab" data-view="progress">Progressi</button>
-    <button class="view-tab" data-view="history">Storico</button>
-    <button class="view-tab" data-view="program">Programma</button>
-  </div>
-
   <!-- LOG VIEW -->
   <div id="view-log">
     <div class="day-rack" id="dayRack"></div>
@@ -744,8 +777,8 @@
       <button id="editCancelBtn">Annulla</button>
     </div>
     <div id="exerciseList"></div>
-    <div class="note-field-wrap">
-      <label class="note-field-label" for="sessionNote">Note (opzionale)</label>
+    <button class="note-toggle" id="noteToggleBtn">+ Aggiungi nota</button>
+    <div class="note-field-wrap" id="noteFieldWrap" style="display:none;">
       <textarea class="note-field" id="sessionNote" placeholder="Come ti sei sentito, sonno, energia..."></textarea>
     </div>
     <div class="save-bar">
@@ -801,6 +834,26 @@
   </div>
 </div>
 
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-view="log">
+    <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="3" height="6" rx="1"/><rect x="19" y="9" width="3" height="6" rx="1"/><line x1="7" y1="12" x2="17" y2="12"/><rect x="5" y="7" width="2" height="10" rx="1"/><rect x="17" y="7" width="2" height="10" rx="1"/></svg></span>
+    <span>Oggi</span>
+  </button>
+  <button class="nav-btn" data-view="progress">
+    <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="5" y2="13"/><line x1="12" y1="19" x2="12" y2="8"/><line x1="19" y1="19" x2="19" y2="4"/></svg></span>
+    <span>Progressi</span>
+  </button>
+  <button class="nav-btn" data-view="history">
+    <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span>
+    <span>Storico</span>
+  </button>
+  <button class="nav-btn" data-view="program">
+    <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg></span>
+    <span>Programma</span>
+  </button>
+</div>
+
 <script>
 /* ---------------- PROGRAM DATA ---------------- */
 const DEFAULT_PROGRAM = {
@@ -846,12 +899,15 @@ let editingIndex = null;
 let statsMode = 'exercise';
 let programDay = 'A';
 
+function dayColorClass(day){
+  return day==='A' ? 'day-a' : day==='B' ? 'day-b' : 'day-c';
+}
+
 function loadProgram(){
   try{
     const raw = localStorage.getItem(PROGRAM_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
-      // ensure all default days exist even if custom program is partial
       Object.keys(DEFAULT_PROGRAM).forEach(d=>{ if(!parsed[d]) parsed[d] = DEFAULT_PROGRAM[d]; });
       return parsed;
     }
@@ -876,6 +932,11 @@ async function init(){
   bindNav();
   document.getElementById('saveBtn').addEventListener('click', saveSession);
   document.getElementById('editCancelBtn').addEventListener('click', cancelEdit);
+  document.getElementById('noteToggleBtn').addEventListener('click', ()=>{
+    document.getElementById('noteFieldWrap').style.display = 'block';
+    document.getElementById('noteToggleBtn').style.display = 'none';
+    document.getElementById('sessionNote').focus();
+  });
 }
 
 async function loadSessions(){
@@ -897,11 +958,11 @@ async function persistSessions(){
 
 /* ---------------- NAV ---------------- */
 function bindNav(){
-  document.querySelectorAll('.view-tab').forEach(tab=>{
-    tab.addEventListener('click', ()=>{
-      document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      currentView = tab.dataset.view;
+  document.querySelectorAll('.nav-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.nav-btn').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
       document.getElementById('view-log').style.display = currentView==='log' ? '' : 'none';
       document.getElementById('view-progress').style.display = currentView==='progress' ? '' : 'none';
       document.getElementById('view-history').style.display = currentView==='history' ? '' : 'none';
@@ -939,7 +1000,7 @@ function renderDayRack(){
   rack.innerHTML = '';
   Object.keys(PROGRAM).forEach(day=>{
     const el = document.createElement('div');
-    el.className = 'day-plate' + (day===currentDay ? ' active':'') + (isDoneToday(day) ? ' done-today':'');
+    el.className = 'day-plate ' + dayColorClass(day) + (day===currentDay ? ' active':'') + (isDoneToday(day) ? ' done-today':'');
     el.innerHTML = `<div class="done-dot"></div><span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
     el.addEventListener('click', ()=>{
       if(editingIndex !== null && day !== currentDay) editingIndex = null;
@@ -1041,7 +1102,6 @@ function renderExercises(){
 
     container.appendChild(card);
 
-    // wire up loading bar updates
     const inputs = card.querySelectorAll('.w-input, .r-input');
     const loadBar = card.querySelector(`#load-${exIdx}`);
     for(let i=0;i<ex.sets;i++){
@@ -1060,7 +1120,10 @@ function renderExercises(){
     inputs.forEach(inp=> inp.addEventListener('input', updateLoad));
   });
 
-  document.getElementById('sessionNote').value = editingSession && editingSession.note ? editingSession.note : '';
+  const noteVal = editingSession && editingSession.note ? editingSession.note : '';
+  document.getElementById('sessionNote').value = noteVal;
+  document.getElementById('noteFieldWrap').style.display = noteVal ? 'block' : 'none';
+  document.getElementById('noteToggleBtn').style.display = noteVal ? 'none' : 'block';
 
   const banner = document.getElementById('editBanner');
   if(editingSession){
@@ -1075,8 +1138,8 @@ function renderExercises(){
 function startEditSession(idx){
   editingIndex = idx;
   currentDay = sessions[idx].day;
-  document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelector('.view-tab[data-view="log"]').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.nav-btn[data-view="log"]').classList.add('active');
   currentView = 'log';
   document.getElementById('view-log').style.display = '';
   document.getElementById('view-progress').style.display = 'none';
@@ -1123,7 +1186,7 @@ async function saveSession(){
     const msg = document.getElementById('savedMsg');
     msg.style.color = 'var(--warn)';
     msg.textContent = 'Inserisci almeno un peso o una ripetizione prima di salvare';
-    setTimeout(()=>{ msg.textContent=''; msg.style.color='var(--good)'; }, 2500);
+    setTimeout(()=>{ msg.textContent=''; msg.style.color='var(--mint)'; }, 2500);
     return;
   }
 
@@ -1148,7 +1211,7 @@ async function saveSession(){
 
   await persistSessions();
 
-  document.getElementById('savedMsg').style.color = 'var(--good)';
+  document.getElementById('savedMsg').style.color = 'var(--mint)';
   document.getElementById('savedMsg').textContent = hasPR ? '✓ Sessione salvata — 🏆 nuovo record!' : '✓ Sessione salvata';
   document.getElementById('sessionNote').value = '';
   document.getElementById('editBanner').style.display = 'none';
@@ -1179,7 +1242,7 @@ function renderProgressView(){
   if(dayRack.children.length===0){
     Object.keys(PROGRAM).forEach(day=>{
       const el = document.createElement('div');
-      el.className = 'day-plate' + (day==='A' ? ' active':'');
+      el.className = 'day-plate ' + dayColorClass(day) + (day==='A' ? ' active':'');
       el.dataset.day = day;
       el.innerHTML = `<span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
       el.addEventListener('click', ()=>{
@@ -1333,13 +1396,13 @@ function renderHistoryView(){
   });
 }
 
-/* ---------------- PROGRAM EDITOR ---------------- */
+/* ---------------- PROGRAM EDITOR (accordion) ---------------- */
 function renderProgramEditor(){
   const dayRack = document.getElementById('programDayRack');
   dayRack.innerHTML = '';
   Object.keys(PROGRAM).forEach(day=>{
     const el = document.createElement('div');
-    el.className = 'day-plate' + (day===programDay ? ' active':'');
+    el.className = 'day-plate ' + dayColorClass(day) + (day===programDay ? ' active':'');
     el.innerHTML = `<span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
     el.addEventListener('click', ()=>{
       programDay = day;
@@ -1354,56 +1417,87 @@ function renderProgramEditor(){
 function renderProgramExList(){
   const list = document.getElementById('programExList');
   list.innerHTML = '';
-  PROGRAM[programDay].exercises.forEach((ex, idx)=>{
-    list.appendChild(buildProgramExRow(ex, idx));
+  PROGRAM[programDay].exercises.forEach((ex)=>{
+    list.appendChild(buildProgramExRow(ex, false));
   });
 }
 
-function buildProgramExRow(ex, idx){
+const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+function buildProgramExRow(ex, startExpanded){
   const card = document.createElement('div');
-  card.className = 'program-ex-card';
-  card.dataset.idx = idx;
+  card.className = 'program-ex-card' + (startExpanded ? ' expanded' : '');
   card.innerHTML = `
-    <div class="program-field-row">
-      <div class="program-field">
-        <label>Nome esercizio</label>
-        <input type="text" class="p-name" value="${ex.name ? ex.name.replace(/"/g,'&quot;') : ''}">
+    <div class="program-ex-summary">
+      <div>
+        <div class="program-ex-summary-text">${ex.name || 'Nuovo esercizio'}</div>
+        <div class="program-ex-summary-sub">${ex.sets || 3} × ${ex.reps || '8-10'}</div>
       </div>
+      <span class="program-ex-chevron">${CHEVRON_SVG}</span>
     </div>
-    <div class="program-field-row">
-      <div class="program-field">
-        <label>Serie</label>
-        <input type="number" class="p-sets" min="1" value="${ex.sets != null ? ex.sets : 3}">
+    <div class="program-ex-body">
+      <div class="program-field-row">
+        <div class="program-field">
+          <label>Nome esercizio</label>
+          <input type="text" class="p-name" value="${ex.name ? ex.name.replace(/"/g,'&quot;') : ''}">
+        </div>
       </div>
-      <div class="program-field">
-        <label>Ripetizioni</label>
-        <input type="text" class="p-reps" value="${ex.reps ? ex.reps.replace(/"/g,'&quot;') : ''}" placeholder="es. 8-10">
+      <div class="program-field-row">
+        <div class="program-field">
+          <label>Serie</label>
+          <input type="number" class="p-sets" min="1" value="${ex.sets != null ? ex.sets : 3}">
+        </div>
+        <div class="program-field">
+          <label>Ripetizioni</label>
+          <input type="text" class="p-reps" value="${ex.reps ? ex.reps.replace(/"/g,'&quot;') : ''}" placeholder="es. 8-10">
+        </div>
       </div>
+      <div class="program-field-row">
+        <div class="program-field">
+          <label>Tag infortunio (opzionale)</label>
+          <input type="text" class="p-injury" value="${ex.injury ? ex.injury.replace(/"/g,'&quot;') : ''}" placeholder="es. coccige">
+        </div>
+      </div>
+      <div class="program-field-row single">
+        <div class="program-field">
+          <label>Nota (opzionale)</label>
+          <textarea class="p-note" rows="2">${ex.note ? ex.note : ''}</textarea>
+        </div>
+      </div>
+      <button class="program-remove-btn">Rimuovi esercizio</button>
     </div>
-    <div class="program-field-row">
-      <div class="program-field">
-        <label>Tag infortunio (opzionale)</label>
-        <input type="text" class="p-injury" value="${ex.injury ? ex.injury.replace(/"/g,'&quot;') : ''}" placeholder="es. coccige">
-      </div>
-    </div>
-    <div class="program-field-row single">
-      <div class="program-field">
-        <label>Nota (opzionale)</label>
-        <textarea class="p-note" rows="2">${ex.note ? ex.note : ''}</textarea>
-      </div>
-    </div>
-    <button class="program-remove-btn">Rimuovi esercizio</button>
   `;
-  card.querySelector('.program-remove-btn').addEventListener('click', ()=>{
+
+  const summary = card.querySelector('.program-ex-summary');
+  const summaryText = card.querySelector('.program-ex-summary-text');
+  const summarySub = card.querySelector('.program-ex-summary-sub');
+  summary.addEventListener('click', ()=>{
+    card.classList.toggle('expanded');
+  });
+
+  const nameInput = card.querySelector('.p-name');
+  const setsInput = card.querySelector('.p-sets');
+  const repsInput = card.querySelector('.p-reps');
+  function syncSummary(){
+    summaryText.textContent = nameInput.value.trim() || 'Nuovo esercizio';
+    summarySub.textContent = `${setsInput.value || 3} × ${repsInput.value || '8-10'}`;
+  }
+  [nameInput, setsInput, repsInput].forEach(inp=> inp.addEventListener('input', syncSummary));
+
+  card.querySelector('.program-remove-btn').addEventListener('click', (e)=>{
+    e.stopPropagation();
     card.remove();
   });
+
   return card;
 }
 
 function addProgramExercise(){
   const list = document.getElementById('programExList');
-  const idx = list.children.length;
-  list.appendChild(buildProgramExRow({ name:'', sets:3, reps:'', injury:'', note:'' }, idx));
+  const row = buildProgramExRow({ name:'', sets:3, reps:'', injury:'', note:'' }, true);
+  list.appendChild(row);
+  row.scrollIntoView({ behavior:'smooth', block:'center' });
+  row.querySelector('.p-name').focus();
 }
 
 function saveProgram(){
@@ -1425,7 +1519,6 @@ function saveProgram(){
   PROGRAM[programDay].exercises = newExercises;
   persistProgram();
 
-  // refresh dependent views
   document.getElementById('exerciseSelect').innerHTML = '';
   if(currentDay === programDay) renderExercises();
   renderDayRack();
