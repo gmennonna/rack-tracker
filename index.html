@@ -81,26 +81,17 @@
     flex:1;
     position:relative;
     border-radius:var(--radius);
-    padding:16px 8px 14px;
+    padding:20px 10px;
     text-align:center;
     cursor:pointer;
     transition:all .18s ease;
     border:none;
   }
-  .day-plate .letter{
-    font-weight:800;
-    font-size:26px;
-    line-height:1;
+  .day-plate .plate-name{
     display:block;
-  }
-  .day-plate .label{
-    display:block;
-    font-size:9.5px;
-    text-transform:uppercase;
-    letter-spacing:.5px;
-    margin-top:5px;
-    font-weight:600;
-    opacity:.85;
+    font-weight:700;
+    font-size:14px;
+    line-height:1.25;
   }
   .day-plate .done-dot{
     position:absolute;
@@ -858,7 +849,7 @@
 /* ---------------- PROGRAM DATA ---------------- */
 const DEFAULT_PROGRAM = {
   A: {
-    label: 'Squat pattern',
+    label: 'Leg Day',
     exercises: [
       { name:'Leg press', sets:4, reps:'8-10', injury:'coccige', note:'Angolazione moderata (non troppo reclinata). Ferma il range di movimento se dà fastidio al coccige.' },
       { name:'Panca piana bilanciere', sets:4, reps:'6-8' },
@@ -868,7 +859,7 @@ const DEFAULT_PROGRAM = {
     ]
   },
   B: {
-    label: 'Hip hinge',
+    label: 'Pull Day',
     exercises: [
       { name:'Hip thrust bilanciere', sets:4, reps:'8-10', injury:'coccige', note:'Sostituisce lo stacco da terra. Stop immediato se dà fastidio al coccige.' },
       { name:'Military press manubri', sets:4, reps:'6-8' },
@@ -879,7 +870,7 @@ const DEFAULT_PROGRAM = {
     ]
   },
   C: {
-    label: 'Unilaterali / punti deboli',
+    label: 'Finisher',
     exercises: [
       { name:'Panca inclinata manubri', sets:4, reps:'8-10' },
       { name:'Pull-up', sets:4, reps:'8-10', note:'Usa zavorra aggiuntiva se superi 10-12 rip. pulite, o banda elastica di assistenza se non arrivi a 8-10.' },
@@ -1001,7 +992,7 @@ function renderDayRack(){
   Object.keys(PROGRAM).forEach(day=>{
     const el = document.createElement('div');
     el.className = 'day-plate ' + dayColorClass(day) + (day===currentDay ? ' active':'') + (isDoneToday(day) ? ' done-today':'');
-    el.innerHTML = `<div class="done-dot"></div><span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
+    el.innerHTML = `<div class="done-dot"></div><span class="plate-name">${PROGRAM[day].label}</span>`;
     el.addEventListener('click', ()=>{
       if(editingIndex !== null && day !== currentDay) editingIndex = null;
       currentDay = day;
@@ -1244,7 +1235,7 @@ function renderProgressView(){
       const el = document.createElement('div');
       el.className = 'day-plate ' + dayColorClass(day) + (day==='A' ? ' active':'');
       el.dataset.day = day;
-      el.innerHTML = `<span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
+      el.innerHTML = `<span class="plate-name">${PROGRAM[day].label}</span>`;
       el.addEventListener('click', ()=>{
         dayRack.querySelectorAll('.day-plate').forEach(p=>p.classList.remove('active'));
         el.classList.add('active');
@@ -1403,7 +1394,7 @@ function renderProgramEditor(){
   Object.keys(PROGRAM).forEach(day=>{
     const el = document.createElement('div');
     el.className = 'day-plate ' + dayColorClass(day) + (day===programDay ? ' active':'');
-    el.innerHTML = `<span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
+    el.innerHTML = `<span class="plate-name">${PROGRAM[day].label}</span>`;
     el.addEventListener('click', ()=>{
       programDay = day;
       renderProgramEditor();
