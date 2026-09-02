@@ -520,6 +520,205 @@
     text-align:center;
     font-family:'IBM Plex Sans', sans-serif;
   }
+
+  /* ---- Edit banner ---- */
+  .edit-banner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(227,153,60,0.10);
+    border:1px solid var(--amber-dim);
+    border-radius:var(--radius);
+    padding:10px 14px;
+    margin-bottom:14px;
+    font-size:12px;
+    color:var(--chalk);
+  }
+  .edit-banner button{
+    background:none;
+    border:none;
+    color:var(--amber);
+    font-size:12px;
+    font-weight:600;
+    text-decoration:underline;
+    cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+
+  /* ---- Note field ---- */
+  .note-field-wrap{
+    margin-top:4px;
+    margin-bottom:4px;
+  }
+  .note-field-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:var(--muted);
+    margin-bottom:6px;
+    display:block;
+  }
+  .note-field{
+    width:100%;
+    background:var(--panel);
+    border:1px solid var(--steel);
+    border-radius:var(--radius);
+    color:var(--chalk);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    padding:10px 12px;
+    resize:vertical;
+    min-height:44px;
+  }
+  .note-field:focus{ outline:none; border-color:var(--amber); }
+
+  /* ---- Record line & PR badge ---- */
+  .record-line{ color:var(--amber); }
+  .pr-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:3px;
+    background:rgba(227,153,60,0.16);
+    border:1px solid var(--amber-dim);
+    color:var(--amber);
+    font-size:10px;
+    font-weight:700;
+    padding:2px 7px;
+    border-radius:20px;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    margin-left:6px;
+  }
+
+  /* ---- Session note in history ---- */
+  .history-note{
+    font-size:12px;
+    color:var(--muted);
+    font-style:italic;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px solid var(--steel);
+  }
+  .history-actions{
+    display:flex;
+    gap:14px;
+    margin-top:8px;
+  }
+  .edit-btn{
+    background:none;
+    border:none;
+    color:var(--amber);
+    font-size:11px;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:0;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+
+  /* ---- Stats mode toggle ---- */
+  .stats-toggle{
+    display:flex;
+    gap:6px;
+    margin-bottom:16px;
+  }
+  .stats-toggle-btn{
+    flex:1;
+    background:none;
+    border:1px solid var(--steel);
+    color:var(--muted);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:12px;
+    padding:9px 8px;
+    border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .stats-toggle-btn.active{
+    background:var(--panel2);
+    border-color:var(--amber-dim);
+    color:var(--chalk);
+  }
+
+  /* ---- Program editor ---- */
+  .program-ex-card{
+    background:var(--panel);
+    border:1px solid var(--steel);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:10px;
+  }
+  .program-field-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .program-field-row.single{ flex-direction:column; }
+  .program-field{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .program-field label{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--muted);
+  }
+  .program-field input, .program-field textarea{
+    background:var(--panel2);
+    border:1px solid var(--steel);
+    border-radius:6px;
+    color:var(--chalk);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    padding:8px 10px;
+  }
+  .program-field input:focus, .program-field textarea:focus{ outline:none; border-color:var(--amber); }
+  .program-remove-btn{
+    background:none;
+    border:none;
+    color:var(--warn);
+    font-size:11px;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:2px 0 0;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .program-add-btn{
+    width:100%;
+    background:var(--panel2);
+    border:1px dashed var(--steel-light);
+    color:var(--chalk);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:12px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    margin-bottom:16px;
+  }
+  .program-reset-link{
+    display:block;
+    width:100%;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:11px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:6px 0 0;
+    text-align:center;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .program-saved-msg{
+    text-align:center;
+    color:var(--good);
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    margin-top:8px;
+    height:14px;
+  }
 </style>
 </head>
 <body>
@@ -534,12 +733,21 @@
     <button class="view-tab active" data-view="log">Oggi</button>
     <button class="view-tab" data-view="progress">Progressi</button>
     <button class="view-tab" data-view="history">Storico</button>
+    <button class="view-tab" data-view="program">Programma</button>
   </div>
 
   <!-- LOG VIEW -->
   <div id="view-log">
     <div class="day-rack" id="dayRack"></div>
+    <div id="editBanner" class="edit-banner" style="display:none;">
+      <span id="editBannerText"></span>
+      <button id="editCancelBtn">Annulla</button>
+    </div>
     <div id="exerciseList"></div>
+    <div class="note-field-wrap">
+      <label class="note-field-label" for="sessionNote">Note (opzionale)</label>
+      <textarea class="note-field" id="sessionNote" placeholder="Come ti sei sentito, sonno, energia..."></textarea>
+    </div>
     <div class="save-bar">
       <button class="save-btn" id="saveBtn">Salva sessione</button>
       <div class="saved-msg" id="savedMsg"></div>
@@ -548,13 +756,30 @@
 
   <!-- PROGRESS VIEW -->
   <div id="view-progress" style="display:none;">
+    <div class="stats-toggle">
+      <button class="stats-toggle-btn active" data-mode="exercise">Per esercizio</button>
+      <button class="stats-toggle-btn" data-mode="day">Per workout</button>
+    </div>
     <select class="progress-select" id="exerciseSelect"></select>
+    <div class="day-rack" id="statsDayRack" style="display:none;"></div>
     <div id="progressCharts"></div>
   </div>
 
   <!-- HISTORY VIEW -->
   <div id="view-history" style="display:none;">
     <div id="historyList"></div>
+  </div>
+
+  <!-- PROGRAM EDITOR VIEW -->
+  <div id="view-program" style="display:none;">
+    <div class="day-rack" id="programDayRack"></div>
+    <div id="programExList"></div>
+    <button class="program-add-btn" id="programAddBtn">+ Aggiungi esercizio</button>
+    <div class="save-bar">
+      <button class="save-btn" id="programSaveBtn">Salva programma</button>
+      <div class="program-saved-msg" id="programSavedMsg"></div>
+      <button class="program-reset-link" id="programResetBtn">Ripristina esercizi predefiniti per questo giorno</button>
+    </div>
   </div>
 
   <!-- REST TIMER -->
@@ -578,7 +803,7 @@
 
 <script>
 /* ---------------- PROGRAM DATA ---------------- */
-const PROGRAM = {
+const DEFAULT_PROGRAM = {
   A: {
     label: 'Squat pattern',
     exercises: [
@@ -612,9 +837,35 @@ const PROGRAM = {
 };
 
 const STORAGE_KEY = 'rack-sessions';
+const PROGRAM_KEY = 'rack-program';
 let sessions = [];
+let PROGRAM = loadProgram();
 let currentDay = 'A';
 let currentView = 'log';
+let editingIndex = null;
+let statsMode = 'exercise';
+let programDay = 'A';
+
+function loadProgram(){
+  try{
+    const raw = localStorage.getItem(PROGRAM_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      // ensure all default days exist even if custom program is partial
+      Object.keys(DEFAULT_PROGRAM).forEach(d=>{ if(!parsed[d]) parsed[d] = DEFAULT_PROGRAM[d]; });
+      return parsed;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+}
+
+function persistProgram(){
+  try{
+    localStorage.setItem(PROGRAM_KEY, JSON.stringify(PROGRAM));
+  }catch(e){
+    console.error('Program storage error', e);
+  }
+}
 
 /* ---------------- INIT ---------------- */
 async function init(){
@@ -624,6 +875,7 @@ async function init(){
   renderExercises();
   bindNav();
   document.getElementById('saveBtn').addEventListener('click', saveSession);
+  document.getElementById('editCancelBtn').addEventListener('click', cancelEdit);
 }
 
 async function loadSessions(){
@@ -653,10 +905,27 @@ function bindNav(){
       document.getElementById('view-log').style.display = currentView==='log' ? '' : 'none';
       document.getElementById('view-progress').style.display = currentView==='progress' ? '' : 'none';
       document.getElementById('view-history').style.display = currentView==='history' ? '' : 'none';
+      document.getElementById('view-program').style.display = currentView==='program' ? '' : 'none';
       if(currentView==='progress') renderProgressView();
       if(currentView==='history') renderHistoryView();
+      if(currentView==='program') renderProgramEditor();
     });
   });
+
+  document.querySelectorAll('.stats-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.stats-toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      statsMode = btn.dataset.mode;
+      document.getElementById('exerciseSelect').style.display = statsMode==='exercise' ? '' : 'none';
+      document.getElementById('statsDayRack').style.display = statsMode==='day' ? 'flex' : 'none';
+      renderProgressView();
+    });
+  });
+
+  document.getElementById('programAddBtn').addEventListener('click', addProgramExercise);
+  document.getElementById('programSaveBtn').addEventListener('click', saveProgram);
+  document.getElementById('programResetBtn').addEventListener('click', resetProgramDay);
 }
 
 /* ---------------- DAY RACK ---------------- */
@@ -673,6 +942,7 @@ function renderDayRack(){
     el.className = 'day-plate' + (day===currentDay ? ' active':'') + (isDoneToday(day) ? ' done-today':'');
     el.innerHTML = `<div class="done-dot"></div><span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
     el.addEventListener('click', ()=>{
+      if(editingIndex !== null && day !== currentDay) editingIndex = null;
       currentDay = day;
       renderDayRack();
       renderExercises();
@@ -697,11 +967,26 @@ function maxWeight(sets){
   return sets.reduce((m,s)=> Math.max(m, parseFloat(s.weight)||0), 0);
 }
 
+function getAllTimeMax(exerciseName, excludeIndex){
+  let best = 0;
+  sessions.forEach((s, idx)=>{
+    if(idx === excludeIndex) return;
+    const ex = s.exercises.find(e=>e.name===exerciseName);
+    if(ex){
+      const w = maxWeight(ex.sets);
+      if(w > best) best = w;
+    }
+  });
+  return best;
+}
+
 /* ---------------- EXERCISE LIST (LOG VIEW) ---------------- */
 function renderExercises(){
   const container = document.getElementById('exerciseList');
   container.innerHTML = '';
   document.getElementById('savedMsg').textContent = '';
+
+  const editingSession = editingIndex !== null ? sessions[editingIndex] : null;
 
   PROGRAM[currentDay].exercises.forEach((ex, exIdx)=>{
     const card = document.createElement('div');
@@ -718,13 +1003,21 @@ function renderExercises(){
       lastHtml = `<div class="last-time">Prima registrazione per questo esercizio</div>`;
     }
 
+    const recordW = getAllTimeMax(ex.name, editingIndex);
+    const recordHtml = recordW > 0 ? `<div class="last-time record-line">Record personale: <b>${recordW} kg</b></div>` : '';
+
+    const editingExercise = editingSession ? editingSession.exercises.find(e=>e.name===ex.name) : null;
+
     let rows = '';
     for(let i=0;i<ex.sets;i++){
+      const prefill = editingExercise && editingExercise.sets[i] ? editingExercise.sets[i] : null;
+      const wVal = prefill && prefill.weight != null ? ` value="${prefill.weight}"` : '';
+      const rVal = prefill && prefill.reps != null ? ` value="${prefill.reps}"` : '';
       rows += `
         <tr class="set-row">
           <td class="set-num">${i+1}</td>
-          <td><input type="number" inputmode="decimal" class="w-input" placeholder="kg" data-set="${i}" min="0" step="0.5"></td>
-          <td><input type="number" inputmode="numeric" class="r-input" placeholder="reps" data-set="${i}" min="0"></td>
+          <td><input type="number" inputmode="decimal" class="w-input" placeholder="kg" data-set="${i}" min="0" step="0.5"${wVal}></td>
+          <td><input type="number" inputmode="numeric" class="r-input" placeholder="reps" data-set="${i}" min="0"${rVal}></td>
         </tr>`;
     }
 
@@ -737,6 +1030,7 @@ function renderExercises(){
         ${ex.injury ? `<span class="injury-badge">⚠ ${ex.injury}</span>` : ''}
       </div>
       ${lastHtml}
+      ${recordHtml}
       <table class="sets-table">
         <thead><tr><th class="num">Set</th><th>Peso</th><th>Reps</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -762,8 +1056,41 @@ function renderExercises(){
         segs[i].classList.toggle('filled', !!inp.value && parseFloat(inp.value) > 0);
       });
     }
+    updateLoad();
     inputs.forEach(inp=> inp.addEventListener('input', updateLoad));
   });
+
+  document.getElementById('sessionNote').value = editingSession && editingSession.note ? editingSession.note : '';
+
+  const banner = document.getElementById('editBanner');
+  if(editingSession){
+    const dateStr = new Date(editingSession.date).toLocaleDateString('it-IT',{day:'numeric',month:'long'});
+    document.getElementById('editBannerText').textContent = `Stai modificando la sessione del ${dateStr}`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function startEditSession(idx){
+  editingIndex = idx;
+  currentDay = sessions[idx].day;
+  document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.view-tab[data-view="log"]').classList.add('active');
+  currentView = 'log';
+  document.getElementById('view-log').style.display = '';
+  document.getElementById('view-progress').style.display = 'none';
+  document.getElementById('view-history').style.display = 'none';
+  document.getElementById('view-program').style.display = 'none';
+  renderDayRack();
+  renderExercises();
+  window.scrollTo(0,0);
+}
+
+function cancelEdit(){
+  editingIndex = null;
+  document.getElementById('sessionNote').value = '';
+  renderExercises();
 }
 
 /* ---------------- SAVE SESSION ---------------- */
@@ -771,6 +1098,7 @@ async function saveSession(){
   const cards = document.querySelectorAll('.exercise-card');
   const exercises = [];
   let anyData = false;
+  let hasPR = false;
 
   cards.forEach(card=>{
     const exIdx = parseInt(card.dataset.exIdx);
@@ -784,7 +1112,11 @@ async function saveSession(){
       if(weight || reps) anyData = true;
       sets.push({ weight, reps });
     });
-    exercises.push({ name: exDef.name, sets });
+    const newMax = maxWeight(sets);
+    const prevMax = getAllTimeMax(exDef.name, editingIndex);
+    const isPR = newMax > 0 && newMax > prevMax;
+    if(isPR) hasPR = true;
+    exercises.push({ name: exDef.name, sets, isPR });
   });
 
   if(!anyData){
@@ -795,18 +1127,34 @@ async function saveSession(){
     return;
   }
 
-  sessions.push({
-    date: new Date().toISOString(),
-    day: currentDay,
-    exercises
-  });
+  const note = document.getElementById('sessionNote').value.trim();
+
+  if(editingIndex !== null){
+    sessions[editingIndex] = {
+      date: sessions[editingIndex].date,
+      day: currentDay,
+      exercises,
+      note
+    };
+    editingIndex = null;
+  } else {
+    sessions.push({
+      date: new Date().toISOString(),
+      day: currentDay,
+      exercises,
+      note
+    });
+  }
 
   await persistSessions();
 
   document.getElementById('savedMsg').style.color = 'var(--good)';
-  document.getElementById('savedMsg').textContent = '✓ Sessione salvata';
+  document.getElementById('savedMsg').textContent = hasPR ? '✓ Sessione salvata — 🏆 nuovo record!' : '✓ Sessione salvata';
+  document.getElementById('sessionNote').value = '';
+  document.getElementById('editBanner').style.display = 'none';
   renderDayRack();
-  setTimeout(()=>{ document.getElementById('savedMsg').textContent=''; }, 2500);
+  renderExercises();
+  setTimeout(()=>{ document.getElementById('savedMsg').textContent=''; }, 3000);
 }
 
 /* ---------------- PROGRESS VIEW ---------------- */
@@ -826,20 +1174,28 @@ function renderProgressView(){
     });
     select.addEventListener('change', renderChart);
   }
-  renderChart();
-}
 
-function renderChart(){
-  const select = document.getElementById('exerciseSelect');
-  const name = select.value || select.options[0]?.value;
-  const container = document.getElementById('progressCharts');
-  container.innerHTML = '';
-
-  if(!name){
-    container.innerHTML = `<div class="empty-state"><span class="big">Niente da mostrare</span>Registra almeno una sessione nella tab "Oggi" per vedere qui i tuoi progressi.</div>`;
-    return;
+  const dayRack = document.getElementById('statsDayRack');
+  if(dayRack.children.length===0){
+    Object.keys(PROGRAM).forEach(day=>{
+      const el = document.createElement('div');
+      el.className = 'day-plate' + (day==='A' ? ' active':'');
+      el.dataset.day = day;
+      el.innerHTML = `<span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
+      el.addEventListener('click', ()=>{
+        dayRack.querySelectorAll('.day-plate').forEach(p=>p.classList.remove('active'));
+        el.classList.add('active');
+        renderDayStats(day);
+      });
+      dayRack.appendChild(el);
+    });
   }
 
+  if(statsMode==='exercise') renderChart();
+  else renderDayStats(dayRack.querySelector('.day-plate.active')?.dataset.day || 'A');
+}
+
+function buildChartCard(name){
   const points = sessions
     .filter(s=> s.exercises.some(e=>e.name===name && e.sets.some(st=>st.weight)))
     .sort((a,b)=> new Date(a.date)-new Date(b.date))
@@ -848,10 +1204,7 @@ function renderChart(){
       return { date: s.date, weight: maxWeight(ex.sets) };
     });
 
-  if(points.length===0){
-    container.innerHTML = `<div class="empty-state"><span class="big">Nessun dato</span>Non hai ancora registrato pesi per questo esercizio.</div>`;
-    return;
-  }
+  if(points.length===0) return null;
 
   const maxW = Math.max(...points.map(p=>p.weight), 1);
   const card = document.createElement('div');
@@ -881,7 +1234,42 @@ function renderChart(){
     <div class="bars">${bars}</div>
     <div style="margin-top:14px;"><span class="delta-badge ${diffClass}">${diffLabel}</span></div>
   `;
+  return card;
+}
+
+function renderChart(){
+  const select = document.getElementById('exerciseSelect');
+  const name = select.value || select.options[0]?.value;
+  const container = document.getElementById('progressCharts');
+  container.innerHTML = '';
+
+  if(!name){
+    container.innerHTML = `<div class="empty-state"><span class="big">Niente da mostrare</span>Registra almeno una sessione nella tab "Oggi" per vedere qui i tuoi progressi.</div>`;
+    return;
+  }
+
+  const card = buildChartCard(name);
+  if(!card){
+    container.innerHTML = `<div class="empty-state"><span class="big">Nessun dato</span>Non hai ancora registrato pesi per questo esercizio.</div>`;
+    return;
+  }
   container.appendChild(card);
+}
+
+function renderDayStats(day){
+  const container = document.getElementById('progressCharts');
+  container.innerHTML = '';
+
+  const exNames = PROGRAM[day].exercises.map(e=>e.name);
+  let anyCard = false;
+  exNames.forEach(name=>{
+    const card = buildChartCard(name);
+    if(card){ container.appendChild(card); anyCard = true; }
+  });
+
+  if(!anyCard){
+    container.innerHTML = `<div class="empty-state"><span class="big">Nessun dato</span>Non hai ancora registrato pesi per gli esercizi del Giorno ${day}.</div>`;
+  }
 }
 
 /* ---------------- HISTORY VIEW ---------------- */
@@ -906,8 +1294,11 @@ function renderHistoryView(){
       const w = maxWeight(ex.sets);
       const setsWithData = ex.sets.filter(st=>st.weight).length;
       if(setsWithData===0) return;
-      exRows += `<div class="history-ex"><span>${ex.name}</span><b>${w} kg × ${setsWithData}</b></div>`;
+      const prBadge = ex.isPR ? `<span class="pr-badge">🏆 PR</span>` : '';
+      exRows += `<div class="history-ex"><span>${ex.name}${prBadge}</span><b>${w} kg × ${setsWithData}</b></div>`;
     });
+
+    const noteHtml = s.note ? `<div class="history-note">${s.note}</div>` : '';
 
     item.innerHTML = `
       <div class="history-head">
@@ -915,7 +1306,11 @@ function renderHistoryView(){
         <span class="history-date">${dateStr}</span>
       </div>
       ${exRows}
-      <button class="del-btn" data-idx="${realIdx}">Elimina sessione</button>
+      ${noteHtml}
+      <div class="history-actions">
+        <button class="edit-btn" data-idx="${realIdx}">Modifica</button>
+        <button class="del-btn" data-idx="${realIdx}">Elimina sessione</button>
+      </div>
     `;
     list.appendChild(item);
   });
@@ -929,6 +1324,129 @@ function renderHistoryView(){
       renderDayRack();
     });
   });
+
+  list.querySelectorAll('.edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = parseInt(btn.dataset.idx);
+      startEditSession(idx);
+    });
+  });
+}
+
+/* ---------------- PROGRAM EDITOR ---------------- */
+function renderProgramEditor(){
+  const dayRack = document.getElementById('programDayRack');
+  dayRack.innerHTML = '';
+  Object.keys(PROGRAM).forEach(day=>{
+    const el = document.createElement('div');
+    el.className = 'day-plate' + (day===programDay ? ' active':'');
+    el.innerHTML = `<span class="letter">${day}</span><span class="label">${PROGRAM[day].label}</span>`;
+    el.addEventListener('click', ()=>{
+      programDay = day;
+      renderProgramEditor();
+    });
+    dayRack.appendChild(el);
+  });
+
+  renderProgramExList();
+}
+
+function renderProgramExList(){
+  const list = document.getElementById('programExList');
+  list.innerHTML = '';
+  PROGRAM[programDay].exercises.forEach((ex, idx)=>{
+    list.appendChild(buildProgramExRow(ex, idx));
+  });
+}
+
+function buildProgramExRow(ex, idx){
+  const card = document.createElement('div');
+  card.className = 'program-ex-card';
+  card.dataset.idx = idx;
+  card.innerHTML = `
+    <div class="program-field-row">
+      <div class="program-field">
+        <label>Nome esercizio</label>
+        <input type="text" class="p-name" value="${ex.name ? ex.name.replace(/"/g,'&quot;') : ''}">
+      </div>
+    </div>
+    <div class="program-field-row">
+      <div class="program-field">
+        <label>Serie</label>
+        <input type="number" class="p-sets" min="1" value="${ex.sets != null ? ex.sets : 3}">
+      </div>
+      <div class="program-field">
+        <label>Ripetizioni</label>
+        <input type="text" class="p-reps" value="${ex.reps ? ex.reps.replace(/"/g,'&quot;') : ''}" placeholder="es. 8-10">
+      </div>
+    </div>
+    <div class="program-field-row">
+      <div class="program-field">
+        <label>Tag infortunio (opzionale)</label>
+        <input type="text" class="p-injury" value="${ex.injury ? ex.injury.replace(/"/g,'&quot;') : ''}" placeholder="es. coccige">
+      </div>
+    </div>
+    <div class="program-field-row single">
+      <div class="program-field">
+        <label>Nota (opzionale)</label>
+        <textarea class="p-note" rows="2">${ex.note ? ex.note : ''}</textarea>
+      </div>
+    </div>
+    <button class="program-remove-btn">Rimuovi esercizio</button>
+  `;
+  card.querySelector('.program-remove-btn').addEventListener('click', ()=>{
+    card.remove();
+  });
+  return card;
+}
+
+function addProgramExercise(){
+  const list = document.getElementById('programExList');
+  const idx = list.children.length;
+  list.appendChild(buildProgramExRow({ name:'', sets:3, reps:'', injury:'', note:'' }, idx));
+}
+
+function saveProgram(){
+  const cards = document.querySelectorAll('#programExList .program-ex-card');
+  const newExercises = [];
+  cards.forEach(card=>{
+    const name = card.querySelector('.p-name').value.trim();
+    if(!name) return;
+    const sets = parseInt(card.querySelector('.p-sets').value) || 3;
+    const reps = card.querySelector('.p-reps').value.trim() || '8-10';
+    const injury = card.querySelector('.p-injury').value.trim();
+    const note = card.querySelector('.p-note').value.trim();
+    const exObj = { name, sets, reps };
+    if(injury) exObj.injury = injury;
+    if(note) exObj.note = note;
+    newExercises.push(exObj);
+  });
+
+  PROGRAM[programDay].exercises = newExercises;
+  persistProgram();
+
+  // refresh dependent views
+  document.getElementById('exerciseSelect').innerHTML = '';
+  if(currentDay === programDay) renderExercises();
+  renderDayRack();
+  renderProgramExList();
+
+  const msg = document.getElementById('programSavedMsg');
+  msg.textContent = '✓ Programma salvato';
+  setTimeout(()=>{ msg.textContent=''; }, 2500);
+}
+
+function resetProgramDay(){
+  PROGRAM[programDay] = JSON.parse(JSON.stringify(DEFAULT_PROGRAM[programDay]));
+  persistProgram();
+  document.getElementById('exerciseSelect').innerHTML = '';
+  if(currentDay === programDay) renderExercises();
+  renderDayRack();
+  renderProgramExList();
+
+  const msg = document.getElementById('programSavedMsg');
+  msg.textContent = '✓ Ripristinato ai valori predefiniti';
+  setTimeout(()=>{ msg.textContent=''; }, 2500);
 }
 
 /* ---------------- REST TIMER ---------------- */
