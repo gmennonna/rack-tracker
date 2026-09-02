@@ -628,8 +628,8 @@ async function init(){
 
 async function loadSessions(){
   try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    sessions = res && res.value ? JSON.parse(res.value) : [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    sessions = raw ? JSON.parse(raw) : [];
   }catch(e){
     sessions = [];
   }
@@ -637,7 +637,7 @@ async function loadSessions(){
 
 async function persistSessions(){
   try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(sessions), false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
   }catch(e){
     console.error('Storage error', e);
   }
