@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RACK — Log Allenamento</title>
+<title>RACK — Workout Log</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -320,7 +320,7 @@
     height:14px;
   }
 
-  /* ---- Progressi view ---- */
+  /* ---- Progress view ---- */
   .stats-toggle{
     display:flex;
     gap:8px;
@@ -422,7 +422,7 @@
     margin-bottom:8px;
   }
 
-  /* ---- Storico view ---- */
+  /* ---- History view ---- */
   .history-item{
     background:var(--card);
     border-radius:var(--radius);
@@ -765,15 +765,15 @@
     <div class="day-rack" id="dayRack"></div>
     <div id="editBanner" class="edit-banner" style="display:none;">
       <span id="editBannerText"></span>
-      <button id="editCancelBtn">Annulla</button>
+      <button id="editCancelBtn">Cancel</button>
     </div>
     <div id="exerciseList"></div>
-    <button class="note-toggle" id="noteToggleBtn">+ Aggiungi nota</button>
+    <button class="note-toggle" id="noteToggleBtn">+ Add note</button>
     <div class="note-field-wrap" id="noteFieldWrap" style="display:none;">
-      <textarea class="note-field" id="sessionNote" placeholder="Come ti sei sentito, sonno, energia..."></textarea>
+      <textarea class="note-field" id="sessionNote" placeholder="How you felt, sleep, energy..."></textarea>
     </div>
     <div class="save-bar">
-      <button class="save-btn" id="saveBtn">Salva sessione</button>
+      <button class="save-btn" id="saveBtn">Save session</button>
       <div class="saved-msg" id="savedMsg"></div>
     </div>
   </div>
@@ -781,8 +781,8 @@
   <!-- PROGRESS VIEW -->
   <div id="view-progress" style="display:none;">
     <div class="stats-toggle">
-      <button class="stats-toggle-btn active" data-mode="exercise">Per esercizio</button>
-      <button class="stats-toggle-btn" data-mode="day">Per workout</button>
+      <button class="stats-toggle-btn active" data-mode="exercise">By exercise</button>
+      <button class="stats-toggle-btn" data-mode="day">By workout</button>
     </div>
     <select class="progress-select" id="exerciseSelect"></select>
     <div class="day-rack" id="statsDayRack" style="display:none;"></div>
@@ -798,11 +798,11 @@
   <div id="view-program" style="display:none;">
     <div class="day-rack" id="programDayRack"></div>
     <div id="programExList"></div>
-    <button class="program-add-btn" id="programAddBtn">+ Aggiungi esercizio</button>
+    <button class="program-add-btn" id="programAddBtn">+ Add exercise</button>
     <div class="save-bar">
-      <button class="save-btn" id="programSaveBtn">Salva programma</button>
+      <button class="save-btn" id="programSaveBtn">Save program</button>
       <div class="program-saved-msg" id="programSavedMsg"></div>
-      <button class="program-reset-link" id="programResetBtn">Ripristina esercizi predefiniti per questo giorno</button>
+      <button class="program-reset-link" id="programResetBtn">Reset to default exercises for this day</button>
     </div>
   </div>
 
@@ -818,7 +818,7 @@
     </div>
     <div class="timer-controls">
       <button class="timer-btn" id="timerMinus">−15</button>
-      <button class="timer-btn timer-btn-primary" id="timerToggle">Avvia</button>
+      <button class="timer-btn timer-btn-primary" id="timerToggle">Start</button>
       <button class="timer-btn" id="timerPlus">+15</button>
     </div>
     <button class="timer-reset-link" id="timerReset">Reset</button>
@@ -829,19 +829,19 @@
 <div class="bottom-nav">
   <button class="nav-btn active" data-view="log">
     <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="3" height="6" rx="1"/><rect x="19" y="9" width="3" height="6" rx="1"/><line x1="7" y1="12" x2="17" y2="12"/><rect x="5" y="7" width="2" height="10" rx="1"/><rect x="17" y="7" width="2" height="10" rx="1"/></svg></span>
-    <span>Oggi</span>
+    <span>Today</span>
   </button>
   <button class="nav-btn" data-view="progress">
     <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="5" y2="13"/><line x1="12" y1="19" x2="12" y2="8"/><line x1="19" y1="19" x2="19" y2="4"/></svg></span>
-    <span>Progressi</span>
+    <span>Progress</span>
   </button>
   <button class="nav-btn" data-view="history">
     <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span>
-    <span>Storico</span>
+    <span>History</span>
   </button>
   <button class="nav-btn" data-view="program">
     <span class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg></span>
-    <span>Programma</span>
+    <span>Program</span>
   </button>
 </div>
 
@@ -851,31 +851,31 @@ const DEFAULT_PROGRAM = {
   A: {
     label: 'Leg Day',
     exercises: [
-      { name:'Leg press', sets:4, reps:'8-10', injury:'coccige', note:'Angolazione moderata (non troppo reclinata). Ferma il range di movimento se dà fastidio al coccige.' },
-      { name:'Panca piana bilanciere', sets:4, reps:'6-8' },
-      { name:'Lat machine presa stretta', sets:4, reps:'8-10' },
-      { name:'Leg extension', sets:3, reps:'12-15', injury:'coccige', note:'Esercizio isolato, basso stress su coccige — dovrebbe essere sicuro.' },
-      { name:'Alzate laterali', sets:3, reps:'12-15' },
+      { name:'Leg Press', sets:4, reps:'8-10', injury:'tailbone', note:'Moderate angle (not too reclined). Stop the range of motion if it bothers your tailbone.' },
+      { name:'Barbell Bench Press', sets:4, reps:'6-8' },
+      { name:'Close-Grip Lat Pulldown', sets:4, reps:'8-10' },
+      { name:'Leg Extension', sets:3, reps:'12-15', injury:'tailbone', note:'Isolated exercise, low stress on the tailbone — should be safe.' },
+      { name:'Lateral Raises', sets:3, reps:'12-15' },
     ]
   },
   B: {
     label: 'Pull Day',
     exercises: [
-      { name:'Hip thrust bilanciere', sets:4, reps:'8-10', injury:'coccige', note:'Sostituisce lo stacco da terra. Stop immediato se dà fastidio al coccige.' },
-      { name:'Military press manubri', sets:4, reps:'6-8' },
-      { name:'Rematore su panca (petto appoggiato)', sets:4, reps:'8-10' },
-      { name:'Leg curl', sets:3, reps:'10-12', injury:'adduttore', note:'Isolato, sicuro per l\'adduttore in guarigione.' },
-      { name:'Curl bicipiti', sets:3, reps:'10-12' },
-      { name:'Push down tricipiti', sets:3, reps:'10-12' },
+      { name:'Barbell Hip Thrust', sets:4, reps:'8-10', injury:'tailbone', note:'Replaces the deadlift. Stop immediately if it bothers your tailbone.' },
+      { name:'Dumbbell Military Press', sets:4, reps:'6-8' },
+      { name:'Chest-Supported Row', sets:4, reps:'8-10' },
+      { name:'Leg Curl', sets:3, reps:'10-12', injury:'adductor', note:'Isolated, safe for the adductor while it heals.' },
+      { name:'Bicep Curl', sets:3, reps:'10-12' },
+      { name:'Tricep Pushdown', sets:3, reps:'10-12' },
     ]
   },
   C: {
     label: 'Finisher',
     exercises: [
-      { name:'Panca inclinata manubri', sets:4, reps:'8-10' },
-      { name:'Pull-up', sets:4, reps:'8-10', note:'Usa zavorra aggiuntiva se superi 10-12 rip. pulite, o banda elastica di assistenza se non arrivi a 8-10.' },
-      { name:'Adductor machine', sets:3, reps:'12-15', injury:'adduttore', note:'Solo lato sinistro, o carico leggerissimo a destra — solo se autorizzato dal fisioterapista.' },
-      { name:'Face pull', sets:3, reps:'12-15' },
+      { name:'Incline Dumbbell Press', sets:4, reps:'8-10' },
+      { name:'Pull-up', sets:4, reps:'8-10', note:'Add extra weight if you can do more than 10-12 clean reps, or use an assistance band if you can\'t reach 8-10.' },
+      { name:'Adductor Machine', sets:3, reps:'12-15', injury:'adductor', note:'Left side only, or very light load on the right — only if authorized by your physical therapist.' },
+      { name:'Face Pull', sets:3, reps:'12-15' },
     ]
   }
 };
@@ -916,7 +916,7 @@ function persistProgram(){
 
 /* ---------------- INIT ---------------- */
 async function init(){
-  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
   await loadSessions();
   renderDayRack();
   renderExercises();
@@ -1049,14 +1049,14 @@ function renderExercises(){
     let lastHtml = '';
     if(last){
       const w = maxWeight(last.ex.sets);
-      const dateStr = new Date(last.session.date).toLocaleDateString('it-IT',{day:'numeric',month:'short'});
-      lastHtml = `<div class="last-time">Ultima volta (${dateStr}): <b>${w} kg</b> × ${last.ex.sets.length} serie</div>`;
+      const dateStr = new Date(last.session.date).toLocaleDateString('en-US',{day:'numeric',month:'short'});
+      lastHtml = `<div class="last-time">Last time (${dateStr}): <b>${w} kg</b> × ${last.ex.sets.length} sets</div>`;
     } else {
-      lastHtml = `<div class="last-time">Prima registrazione per questo esercizio</div>`;
+      lastHtml = `<div class="last-time">First time logging this exercise</div>`;
     }
 
     const recordW = getAllTimeMax(ex.name, editingIndex);
-    const recordHtml = recordW > 0 ? `<div class="last-time record-line">Record personale: <b>${recordW} kg</b></div>` : '';
+    const recordHtml = recordW > 0 ? `<div class="last-time record-line">Personal record: <b>${recordW} kg</b></div>` : '';
 
     const editingExercise = editingSession ? editingSession.exercises.find(e=>e.name===ex.name) : null;
 
@@ -1084,7 +1084,7 @@ function renderExercises(){
       ${lastHtml}
       ${recordHtml}
       <table class="sets-table">
-        <thead><tr><th class="num">Set</th><th>Peso</th><th>Reps</th></tr></thead>
+        <thead><tr><th class="num">Set</th><th>Weight</th><th>Reps</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="plate-load" id="load-${exIdx}"></div>
@@ -1118,8 +1118,8 @@ function renderExercises(){
 
   const banner = document.getElementById('editBanner');
   if(editingSession){
-    const dateStr = new Date(editingSession.date).toLocaleDateString('it-IT',{day:'numeric',month:'long'});
-    document.getElementById('editBannerText').textContent = `Stai modificando la sessione del ${dateStr}`;
+    const dateStr = new Date(editingSession.date).toLocaleDateString('en-US',{day:'numeric',month:'long'});
+    document.getElementById('editBannerText').textContent = `Editing session from ${dateStr}`;
     banner.style.display = 'flex';
   } else {
     banner.style.display = 'none';
@@ -1176,7 +1176,7 @@ async function saveSession(){
   if(!anyData){
     const msg = document.getElementById('savedMsg');
     msg.style.color = 'var(--warn)';
-    msg.textContent = 'Inserisci almeno un peso o una ripetizione prima di salvare';
+    msg.textContent = 'Enter at least one weight or rep before saving';
     setTimeout(()=>{ msg.textContent=''; msg.style.color='var(--mint)'; }, 2500);
     return;
   }
@@ -1203,7 +1203,7 @@ async function saveSession(){
   await persistSessions();
 
   document.getElementById('savedMsg').style.color = 'var(--mint)';
-  document.getElementById('savedMsg').textContent = hasPR ? '✓ Sessione salvata — 🏆 nuovo record!' : '✓ Sessione salvata';
+  document.getElementById('savedMsg').textContent = hasPR ? '✓ Session saved — 🏆 new record!' : '✓ Session saved';
   document.getElementById('sessionNote').value = '';
   document.getElementById('editBanner').style.display = 'none';
   renderDayRack();
@@ -1268,7 +1268,7 @@ function buildChartCard(name){
   let bars = '';
   last8.forEach(p=>{
     const h = Math.max(6, (p.weight / maxW) * 100);
-    const d = new Date(p.date).toLocaleDateString('it-IT',{day:'numeric',month:'numeric'});
+    const d = new Date(p.date).toLocaleDateString('en-US',{day:'numeric',month:'numeric'});
     bars += `
       <div class="bar-col">
         <div class="bar-val">${p.weight}</div>
@@ -1280,11 +1280,11 @@ function buildChartCard(name){
   const first = points[0].weight;
   const latest = points[points.length-1].weight;
   const diff = (latest - first);
-  const diffLabel = diff > 0 ? `+${diff} kg dal primo log` : diff < 0 ? `${diff} kg dal primo log` : 'invariato dal primo log';
+  const diffLabel = diff > 0 ? `+${diff} kg since first log` : diff < 0 ? `${diff} kg since first log` : 'unchanged since first log';
   const diffClass = diff > 0 ? 'delta-up' : diff < 0 ? 'delta-down' : 'delta-flat';
 
   card.innerHTML = `
-    <div class="chart-title">${name} — carico massimo per sessione</div>
+    <div class="chart-title">${name} — max load per session</div>
     <div class="bars">${bars}</div>
     <div style="margin-top:14px;"><span class="delta-badge ${diffClass}">${diffLabel}</span></div>
   `;
@@ -1298,13 +1298,13 @@ function renderChart(){
   container.innerHTML = '';
 
   if(!name){
-    container.innerHTML = `<div class="empty-state"><span class="big">Niente da mostrare</span>Registra almeno una sessione nella tab "Oggi" per vedere qui i tuoi progressi.</div>`;
+    container.innerHTML = `<div class="empty-state"><span class="big">Nothing to show yet</span>Log at least one session in the "Today" tab to see your progress here.</div>`;
     return;
   }
 
   const card = buildChartCard(name);
   if(!card){
-    container.innerHTML = `<div class="empty-state"><span class="big">Nessun dato</span>Non hai ancora registrato pesi per questo esercizio.</div>`;
+    container.innerHTML = `<div class="empty-state"><span class="big">No data yet</span>You haven't logged any weights for this exercise yet.</div>`;
     return;
   }
   container.appendChild(card);
@@ -1322,7 +1322,7 @@ function renderDayStats(day){
   });
 
   if(!anyCard){
-    container.innerHTML = `<div class="empty-state"><span class="big">Nessun dato</span>Non hai ancora registrato pesi per gli esercizi del Giorno ${day}.</div>`;
+    container.innerHTML = `<div class="empty-state"><span class="big">No data yet</span>You haven't logged any weights for ${PROGRAM[day].label} exercises yet.</div>`;
   }
 }
 
@@ -1332,7 +1332,7 @@ function renderHistoryView(){
   list.innerHTML = '';
 
   if(sessions.length===0){
-    list.innerHTML = `<div class="empty-state"><span class="big">Storico vuoto</span>Le sessioni salvate compariranno qui.</div>`;
+    list.innerHTML = `<div class="empty-state"><span class="big">History is empty</span>Saved sessions will appear here.</div>`;
     return;
   }
 
@@ -1341,7 +1341,7 @@ function renderHistoryView(){
     const realIdx = sessions.indexOf(s);
     const item = document.createElement('div');
     item.className = 'history-item';
-    const dateStr = new Date(s.date).toLocaleDateString('it-IT',{weekday:'long', day:'numeric', month:'long'});
+    const dateStr = new Date(s.date).toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long'});
 
     let exRows = '';
     s.exercises.forEach(ex=>{
@@ -1356,14 +1356,14 @@ function renderHistoryView(){
 
     item.innerHTML = `
       <div class="history-head">
-        <span class="history-day">Giorno ${s.day}</span>
+        <span class="history-day">${PROGRAM[s.day] ? PROGRAM[s.day].label : s.day}</span>
         <span class="history-date">${dateStr}</span>
       </div>
       ${exRows}
       ${noteHtml}
       <div class="history-actions">
-        <button class="edit-btn" data-idx="${realIdx}">Modifica</button>
-        <button class="del-btn" data-idx="${realIdx}">Elimina sessione</button>
+        <button class="edit-btn" data-idx="${realIdx}">Edit</button>
+        <button class="del-btn" data-idx="${realIdx}">Delete session</button>
       </div>
     `;
     list.appendChild(item);
@@ -1421,7 +1421,7 @@ function buildProgramExRow(ex, startExpanded){
   card.innerHTML = `
     <div class="program-ex-summary">
       <div>
-        <div class="program-ex-summary-text">${ex.name || 'Nuovo esercizio'}</div>
+        <div class="program-ex-summary-text">${ex.name || 'New exercise'}</div>
         <div class="program-ex-summary-sub">${ex.sets || 3} × ${ex.reps || '8-10'}</div>
       </div>
       <span class="program-ex-chevron">${CHEVRON_SVG}</span>
@@ -1429,33 +1429,33 @@ function buildProgramExRow(ex, startExpanded){
     <div class="program-ex-body">
       <div class="program-field-row">
         <div class="program-field">
-          <label>Nome esercizio</label>
+          <label>Exercise name</label>
           <input type="text" class="p-name" value="${ex.name ? ex.name.replace(/"/g,'&quot;') : ''}">
         </div>
       </div>
       <div class="program-field-row">
         <div class="program-field">
-          <label>Serie</label>
+          <label>Sets</label>
           <input type="number" class="p-sets" min="1" value="${ex.sets != null ? ex.sets : 3}">
         </div>
         <div class="program-field">
-          <label>Ripetizioni</label>
-          <input type="text" class="p-reps" value="${ex.reps ? ex.reps.replace(/"/g,'&quot;') : ''}" placeholder="es. 8-10">
+          <label>Reps</label>
+          <input type="text" class="p-reps" value="${ex.reps ? ex.reps.replace(/"/g,'&quot;') : ''}" placeholder="e.g. 8-10">
         </div>
       </div>
       <div class="program-field-row">
         <div class="program-field">
-          <label>Tag infortunio (opzionale)</label>
-          <input type="text" class="p-injury" value="${ex.injury ? ex.injury.replace(/"/g,'&quot;') : ''}" placeholder="es. coccige">
+          <label>Injury tag (optional)</label>
+          <input type="text" class="p-injury" value="${ex.injury ? ex.injury.replace(/"/g,'&quot;') : ''}" placeholder="e.g. tailbone">
         </div>
       </div>
       <div class="program-field-row single">
         <div class="program-field">
-          <label>Nota (opzionale)</label>
+          <label>Note (optional)</label>
           <textarea class="p-note" rows="2">${ex.note ? ex.note : ''}</textarea>
         </div>
       </div>
-      <button class="program-remove-btn">Rimuovi esercizio</button>
+      <button class="program-remove-btn">Remove exercise</button>
     </div>
   `;
 
@@ -1470,7 +1470,7 @@ function buildProgramExRow(ex, startExpanded){
   const setsInput = card.querySelector('.p-sets');
   const repsInput = card.querySelector('.p-reps');
   function syncSummary(){
-    summaryText.textContent = nameInput.value.trim() || 'Nuovo esercizio';
+    summaryText.textContent = nameInput.value.trim() || 'New exercise';
     summarySub.textContent = `${setsInput.value || 3} × ${repsInput.value || '8-10'}`;
   }
   [nameInput, setsInput, repsInput].forEach(inp=> inp.addEventListener('input', syncSummary));
@@ -1516,7 +1516,7 @@ function saveProgram(){
   renderProgramExList();
 
   const msg = document.getElementById('programSavedMsg');
-  msg.textContent = '✓ Programma salvato';
+  msg.textContent = '✓ Program saved';
   setTimeout(()=>{ msg.textContent=''; }, 2500);
 }
 
@@ -1529,7 +1529,7 @@ function resetProgramDay(){
   renderProgramExList();
 
   const msg = document.getElementById('programSavedMsg');
-  msg.textContent = '✓ Ripristinato ai valori predefiniti';
+  msg.textContent = '✓ Reset to defaults';
   setTimeout(()=>{ msg.textContent=''; }, 2500);
 }
 
@@ -1576,14 +1576,14 @@ function timerBeep(){
 function startTimer(){
   if(timerRunning) return;
   timerRunning = true;
-  document.getElementById('timerToggle').textContent = 'Pausa';
+  document.getElementById('timerToggle').textContent = 'Pause';
   timerInterval = setInterval(()=>{
     timerRemaining--;
     updateTimerDisplay();
     if(timerRemaining <= 0){
       clearInterval(timerInterval);
       timerRunning = false;
-      document.getElementById('timerToggle').textContent = 'Avvia';
+      document.getElementById('timerToggle').textContent = 'Start';
       timerBeep();
     }
   }, 1000);
@@ -1592,7 +1592,7 @@ function startTimer(){
 function pauseTimer(){
   clearInterval(timerInterval);
   timerRunning = false;
-  document.getElementById('timerToggle').textContent = 'Avvia';
+  document.getElementById('timerToggle').textContent = 'Start';
 }
 
 function resetTimer(){
