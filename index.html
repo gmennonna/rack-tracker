@@ -547,6 +547,70 @@
     transition:transform .2s ease;
   }
   .program-ex-card.expanded .program-ex-chevron{ transform:rotate(180deg); }
+  .program-ex-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .program-ex-handle{
+    width:16px;
+    height:16px;
+    color:var(--muted);
+    opacity:.6;
+  }
+  /* Long-press target: no text selection or iOS/Android callout menu. */
+  .program-ex-summary{
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .program-ex-card.reorder-shift{
+    transition:transform .18s ease;
+  }
+  .program-ex-card.dragging{
+    position:relative;
+    z-index:20;
+    transform-origin:center;
+    box-shadow:0 18px 36px rgba(0,0,0,0.45);
+    background:var(--card2);
+  }
+  .program-ex-card.dragging.settling{
+    transition:transform .18s ease;
+  }
+  body.reordering{
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:104px;
+    transform:translate(-50%, 8px);
+    background:var(--card2);
+    color:var(--mint);
+    font-size:12.5px;
+    font-weight:600;
+    padding:10px 18px;
+    border-radius:var(--radius-pill);
+    box-shadow:0 10px 24px rgba(0,0,0,0.35);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:80;
+    white-space:nowrap;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translate(-50%, 0);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .program-ex-card.reorder-shift,
+    .program-ex-card.dragging.settling,
+    .toast{ transition:none; }
+  }
   .program-ex-body{
     display:none;
     padding:0 16px 16px;
@@ -830,6 +894,8 @@
       <button class="program-reset-link" id="programResetBtn">Reset to default exercises for this day</button>
     </div>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <!-- REST TIMER -->
   <button class="timer-fab" id="timerFab">⏱</button>
@@ -1982,6 +2048,296 @@ function renderProgramExList(){
 }
 
 const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+const HANDLE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>';
+
+/* ---------------- PROGRAM REORDER (long press + drag) ---------------- */
+const LONG_PRESS_MS = 400;
+const PRESS_MOVE_TOLERANCE = 10;
+const AUTOSCROLL_EDGE = 80;
+const AUTOSCROLL_MAX_SPEED = 14;
+let reorder = null;
+
+function prefersReducedMotion(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+function showToast(text){
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(()=> el.classList.remove('show'), 1600);
+}
+
+// Index the dragged card will take: how many other cards' centers lie above its center.
+function computeTargetIndex(centers, from, draggedCenter){
+  let to = 0;
+  centers.forEach((c, i)=>{ if(i !== from && c < draggedCenter) to++; });
+  return to;
+}
+
+// New exercise order after `moved` was dropped. `domOrder` lists each card's source entry in its new
+// on-screen order; entries not in `exercises` (unsaved new cards) are skipped, and exercises without
+// a card (removed but not yet saved) keep their place. Returns null when `moved` is not saved yet.
+function reorderProgramExercises(exercises, domOrder, moved){
+  if(!exercises.includes(moved)) return null;
+  const rest = exercises.filter(e=> e !== moved);
+  const pos = domOrder.indexOf(moved);
+  const next = domOrder.slice(pos + 1).find(e=> rest.includes(e));
+  if(next){
+    rest.splice(rest.indexOf(next), 0, moved);
+    return rest;
+  }
+  const prev = domOrder.slice(0, pos).reverse().find(e=> rest.includes(e));
+  if(prev){
+    rest.splice(rest.indexOf(prev) + 1, 0, moved);
+    return rest;
+  }
+  return exercises.slice();
+}
+
+// Keys like name + occurrence, so two exercises with the same name in a day stay distinct.
+function occurrenceKeys(names){
+  const seen = {};
+  return names.map(n=>{
+    seen[n] = (seen[n] || 0) + 1;
+    return JSON.stringify([n, seen[n]]);
+  });
+}
+
+// Today's unsaved inputs (Today maps inputs to exercises by position, so they must follow the reorder).
+// Keyed by the PROGRAM entry itself, which reordering moves but never recreates; name + occurrence
+// is the fallback. Either way two exercises with the same name stay distinct.
+function captureTodayInputs(){
+  const exercises = PROGRAM[currentDay].exercises;
+  const keys = occurrenceKeys(exercises.map(e=> e.name));
+  const byEx = new Map();
+  const byKey = {};
+  document.querySelectorAll('#exerciseList .exercise-card').forEach(card=>{
+    const idx = parseInt(card.dataset.exIdx);
+    if(!exercises[idx]) return;
+    const values = {
+      weights: [...card.querySelectorAll('.w-input')].map(i=> i.value),
+      reps: [...card.querySelectorAll('.r-input')].map(i=> i.value)
+    };
+    byEx.set(exercises[idx], values);
+    byKey[keys[idx]] = values;
+  });
+  return {
+    byEx,
+    byKey,
+    note: document.getElementById('sessionNote').value,
+    noteOpen: document.getElementById('noteFieldWrap').style.display === 'block'
+  };
+}
+
+function restoreTodayInputs(state){
+  const exercises = PROGRAM[currentDay].exercises;
+  const keys = occurrenceKeys(exercises.map(e=> e.name));
+  document.querySelectorAll('#exerciseList .exercise-card').forEach(card=>{
+    const idx = parseInt(card.dataset.exIdx);
+    const saved = state.byEx.get(exercises[idx]) || state.byKey[keys[idx]];
+    if(!saved) return;
+    card.querySelectorAll('.w-input').forEach((inp, i)=>{ if(saved.weights[i] !== undefined) inp.value = saved.weights[i]; });
+    card.querySelectorAll('.r-input').forEach((inp, i)=>{ if(saved.reps[i] !== undefined) inp.value = saved.reps[i]; });
+    const first = card.querySelector('.w-input');
+    if(first) first.dispatchEvent(new Event('input'));  // refresh the plate-load bar
+  });
+  document.getElementById('sessionNote').value = state.note;
+  if(state.noteOpen || state.note){
+    document.getElementById('noteFieldWrap').style.display = 'block';
+    document.getElementById('noteToggleBtn').style.display = 'none';
+  }
+}
+
+// Persists only the new order; other unsaved edits in the editor still wait for "Save program".
+function saveReorderedProgram(card){
+  const list = document.getElementById('programExList');
+  const exercises = PROGRAM[programDay].exercises;
+  const domOrder = [...list.querySelectorAll(':scope > .program-ex-card')].map(c=> c._sourceEx);
+  const next = reorderProgramExercises(exercises, domOrder, card._sourceEx);
+  if(!next){
+    showToast('Order updated — tap Save program');
+    return;
+  }
+
+  const todayState = currentDay === programDay ? captureTodayInputs() : null;
+  PROGRAM[programDay].exercises = next;
+  persistProgram();
+  document.getElementById('exerciseSelect').innerHTML = '';
+  if(todayState){
+    renderExercises();
+    restoreTodayInputs(todayState);
+  }
+  showToast('Order saved');
+}
+
+function attachReorder(card, pressArea){
+  let press = null;
+
+  function cancelPress(){
+    if(press){ clearTimeout(press.timer); press = null; }
+  }
+
+  pressArea.addEventListener('contextmenu', e=> e.preventDefault());
+
+  pressArea.addEventListener('pointerdown', e=>{
+    if(reorder || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    cancelPress();
+    press = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      lastY: e.clientY,
+      timer: setTimeout(()=>{
+        const y = press.lastY, id = press.pointerId;
+        press = null;
+        startReorder(card, id, y);
+      }, LONG_PRESS_MS)
+    };
+  });
+
+  card.addEventListener('pointermove', e=>{
+    if(press && e.pointerId === press.pointerId){
+      press.lastY = e.clientY;
+      if(Math.hypot(e.clientX - press.startX, e.clientY - press.startY) > PRESS_MOVE_TOLERANCE) cancelPress();
+      return;
+    }
+    if(reorder && reorder.card === card && e.pointerId === reorder.pointerId && !reorder.ending){
+      reorder.lastClientY = e.clientY;
+      updateReorder();
+    }
+  });
+
+  function onPointerEnd(e){
+    if(press && e.pointerId === press.pointerId){ cancelPress(); return; }
+    if(reorder && reorder.card === card && e.pointerId === reorder.pointerId && !reorder.ending){
+      endReorder(e.type === 'pointerup');
+    }
+  }
+  card.addEventListener('pointerup', onPointerEnd);
+  card.addEventListener('pointercancel', onPointerEnd);
+
+  // Once dragging, stop the browser from turning the gesture into a page scroll (which would cancel the pointer).
+  card.addEventListener('touchmove', e=>{
+    if(reorder && reorder.card === card) e.preventDefault();
+  }, { passive:false });
+}
+
+function startReorder(card, pointerId, clientY){
+  const list = card.parentElement;
+  card.classList.remove('expanded');  // collapse first so positions are measured on the compact layout
+
+  const cards = [...list.querySelectorAll(':scope > .program-ex-card')];
+  const scrollY0 = window.scrollY;
+  const rects = cards.map(c=> c.getBoundingClientRect());
+
+  reorder = {
+    card, list, cards, pointerId,
+    from: cards.indexOf(card),
+    to: cards.indexOf(card),
+    tops: rects.map(r=> r.top + scrollY0),
+    heights: rects.map(r=> r.height),
+    gap: parseFloat(getComputedStyle(card).marginBottom) || 0,
+    startPageY: clientY + scrollY0,
+    lastClientY: clientY,
+    reduced: prefersReducedMotion(),
+    raf: null,
+    ending: false
+  };
+
+  try{ card.setPointerCapture(pointerId); }catch(e){}
+  if(navigator.vibrate) navigator.vibrate(30);
+  document.body.classList.add('reordering');
+  cards.forEach(c=>{ if(c !== card) c.classList.add('reorder-shift'); });
+  card.classList.add('dragging');
+  card._suppressClick = true;
+  updateReorder();
+  reorder.raf = requestAnimationFrame(autoScrollTick);
+}
+
+function updateReorder(){
+  const r = reorder;
+  const last = r.cards.length - 1;
+  const minDy = r.tops[0] - r.tops[r.from];
+  const maxDy = (r.tops[last] + r.heights[last]) - (r.tops[r.from] + r.heights[r.from]);
+  const dy = Math.max(minDy, Math.min(maxDy, r.lastClientY + window.scrollY - r.startPageY));
+
+  const centers = r.tops.map((t, i)=> t + r.heights[i] / 2);
+  r.to = computeTargetIndex(centers, r.from, centers[r.from] + dy);
+
+  const step = r.heights[r.from] + r.gap;
+  r.cards.forEach((c, i)=>{
+    if(i === r.from) return;
+    let shift = 0;
+    if(r.from < i && i <= r.to) shift = -step;
+    else if(r.to <= i && i < r.from) shift = step;
+    c.style.transform = shift ? `translateY(${shift}px)` : '';
+  });
+  r.card.style.transform = `translateY(${dy}px)` + (r.reduced ? '' : ' scale(1.03)');
+}
+
+function autoScrollTick(){
+  const r = reorder;
+  if(!r || r.ending) return;
+  const nav = document.querySelector('.bottom-nav');
+  const bottom = Math.min(window.innerHeight, nav ? nav.getBoundingClientRect().top : window.innerHeight);
+  const y = r.lastClientY;
+
+  let speed = 0;
+  if(y < AUTOSCROLL_EDGE){
+    speed = -AUTOSCROLL_MAX_SPEED * Math.min(1, (AUTOSCROLL_EDGE - y) / AUTOSCROLL_EDGE);
+  } else if(y > bottom - AUTOSCROLL_EDGE){
+    speed = AUTOSCROLL_MAX_SPEED * Math.min(1, (y - (bottom - AUTOSCROLL_EDGE)) / AUTOSCROLL_EDGE);
+  }
+  if(speed){
+    const before = window.scrollY;
+    window.scrollBy(0, Math.sign(speed) * Math.max(1, Math.round(Math.abs(speed))));
+    if(window.scrollY !== before) updateReorder();
+  }
+  r.raf = requestAnimationFrame(autoScrollTick);
+}
+
+// commit=false (pointercancel) slides the card back without saving.
+function endReorder(commit){
+  const r = reorder;
+  r.ending = true;
+  cancelAnimationFrame(r.raf);
+  const to = commit ? r.to : r.from;
+
+  let offset = 0;
+  if(to > r.from) for(let i = r.from + 1; i <= to; i++) offset += r.heights[i] + r.gap;
+  else for(let i = to; i < r.from; i++) offset -= r.heights[i] + r.gap;
+  if(!commit) r.cards.forEach(c=>{ if(c !== r.card) c.style.transform = ''; });
+
+  let finished = false;
+  const finish = ()=>{
+    if(finished) return;
+    finished = true;
+    r.cards.forEach(c=>{
+      c.style.transform = '';
+      c.classList.remove('reorder-shift', 'dragging', 'settling');
+    });
+    document.body.classList.remove('reordering');
+    // A click, if any, arrives right after pointerup; after that, taps toggle the card again.
+    setTimeout(()=>{ r.card._suppressClick = false; }, 400);
+    if(to !== r.from){
+      const others = r.cards.filter(c=> c !== r.card);
+      r.list.insertBefore(r.card, others[to] || null);
+    }
+    reorder = null;
+    if(to !== r.from) saveReorderedProgram(r.card);
+  };
+
+  if(r.reduced){
+    finish();
+    return;
+  }
+  r.card.classList.add('settling');
+  r.card.style.transform = `translateY(${offset}px)`;
+  r.card.addEventListener('transitionend', finish, { once:true });
+  setTimeout(finish, 260);
+}
 
 function buildProgramExRow(ex, startExpanded){
   const card = document.createElement('div');
@@ -1992,7 +2348,10 @@ function buildProgramExRow(ex, startExpanded){
         <div class="program-ex-summary-text">${ex.name || 'New exercise'}</div>
         <div class="program-ex-summary-sub">${ex.sets || 3} × ${ex.reps || '8-10'}</div>
       </div>
-      <span class="program-ex-chevron">${CHEVRON_SVG}</span>
+      <span class="program-ex-actions">
+        <span class="program-ex-handle" aria-hidden="true">${HANDLE_SVG}</span>
+        <span class="program-ex-chevron">${CHEVRON_SVG}</span>
+      </span>
     </div>
     <div class="program-ex-body">
       <div class="program-field-row">
@@ -2031,8 +2390,14 @@ function buildProgramExRow(ex, startExpanded){
   const summaryText = card.querySelector('.program-ex-summary-text');
   const summarySub = card.querySelector('.program-ex-summary-sub');
   summary.addEventListener('click', ()=>{
+    // The click that some browsers fire right after a drag must not toggle the card.
+    if(card._suppressClick){ card._suppressClick = false; return; }
     card.classList.toggle('expanded');
   });
+
+  // The PROGRAM entry this card was built from (absent from PROGRAM for unsaved new cards).
+  card._sourceEx = ex;
+  attachReorder(card, summary);
 
   const nameInput = card.querySelector('.p-name');
   const setsInput = card.querySelector('.p-sets');
