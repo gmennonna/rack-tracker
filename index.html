@@ -809,6 +809,7 @@
     <button class="export-btn" id="exportReportBtn">Export report</button>
     <button class="export-btn" id="exportBackupBtn">Export backup</button>
     <button class="export-btn" id="importBackupBtn">Import backup</button>
+    <button class="export-btn" id="undoImportBtn" style="display:none;">Undo last import</button>
     <input type="file" id="importBackupInput" accept=".json,application/json" style="display:none;">
     <div class="saved-msg" id="exportMsg" style="height:auto; min-height:14px; line-height:1.5;"></div>
   </div>
@@ -1037,6 +1038,7 @@ function bindNav(){
   document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
   const importInput = document.getElementById('importBackupInput');
   document.getElementById('importBackupBtn').addEventListener('click', ()=> importInput.click());
+  document.getElementById('undoImportBtn').addEventListener('click', undoImport);
   importInput.addEventListener('change', ()=>{
     const file = importInput.files[0];
     importInput.value = '';  // allow re-selecting the same file later
@@ -1387,6 +1389,7 @@ function renderProgressView(){
     });
   }
 
+  updateUndoButton();
   if(statsMode==='exercise') renderChart();
   else renderDayStats(dayRack.querySelector('.day-plate.active')?.dataset.day || 'A');
 }
@@ -1767,15 +1770,89 @@ async function applyBackup(data){
   }catch(e){
     throw new Error('Could not save a copy of the current data, import cancelled.');
   }
+  await replaceData(data.sessions, data.program);
+}
 
-  sessions = JSON.parse(JSON.stringify(data.sessions));
-  const program = JSON.parse(JSON.stringify(data.program));
+async function replaceData(newSessions, newProgram){
+  sessions = JSON.parse(JSON.stringify(newSessions));
+  const program = JSON.parse(JSON.stringify(newProgram));
   Object.keys(DEFAULT_PROGRAM).forEach(d=>{ if(!program[d]) program[d] = JSON.parse(JSON.stringify(DEFAULT_PROGRAM[d])); });
   PROGRAM = program;
 
   recomputePRs();
   await persistSessions();
   persistProgram();
+}
+
+// Data saved before the last import: null if there is none, { error } if it is unreadable.
+function readUndoData(){
+  let rawSessions, rawProgram;
+  try{
+    rawSessions = localStorage.getItem(PREV_SESSIONS_KEY);
+    rawProgram = localStorage.getItem(PREV_PROGRAM_KEY);
+  }catch(e){
+    return null;
+  }
+  if(rawSessions === null && rawProgram === null) return null;
+
+  let data;
+  try{
+    data = {
+      version: BACKUP_VERSION,
+      sessions: rawSessions !== null ? JSON.parse(rawSessions) : sessions,
+      program: rawProgram !== null ? JSON.parse(rawProgram) : PROGRAM
+    };
+  }catch(e){
+    return { error: 'The saved pre-import copy is not valid JSON.' };
+  }
+  const error = validateBackup(data);
+  return error ? { error: `The saved pre-import copy is invalid: ${error}` } : { data };
+}
+
+async function restorePreviousData(data){
+  await replaceData(data.sessions, data.program);
+  // Drop the copy so the same undo cannot be applied twice.
+  try{
+    localStorage.removeItem(PREV_SESSIONS_KEY);
+    localStorage.removeItem(PREV_PROGRAM_KEY);
+  }catch(e){}
+}
+
+function updateUndoButton(){
+  document.getElementById('undoImportBtn').style.display = readUndoData() ? '' : 'none';
+}
+
+function refreshAfterDataChange(){
+  editingIndex = null;
+  if(!PROGRAM[currentDay]) currentDay = Object.keys(PROGRAM)[0];
+  if(!PROGRAM[programDay]) programDay = Object.keys(PROGRAM)[0];
+  document.getElementById('exerciseSelect').innerHTML = '';
+  document.getElementById('statsDayRack').innerHTML = '';
+  renderDayRack();
+  renderExercises();
+  renderProgressView();
+}
+
+async function undoImport(){
+  const undo = readUndoData();
+  if(!undo){
+    updateUndoButton();
+    return;
+  }
+  if(undo.error){
+    flashExportMsg(`${undo.error} Nothing was changed.`, true);
+    return;
+  }
+
+  const ok = confirm(
+    `Restore the data from before the last import: ${describeSessions(undo.data.sessions)}?\n` +
+    `Current data (${describeSessions(sessions)}) will be replaced. This undo can only be done once.`
+  );
+  if(!ok) return;
+
+  await restorePreviousData(undo.data);
+  refreshAfterDataChange();
+  flashExportMsg(`✓ Restored ${describeSessions(sessions)}`);
 }
 
 async function importBackup(file){
@@ -1812,14 +1889,7 @@ async function importBackup(file){
     return;
   }
 
-  editingIndex = null;
-  if(!PROGRAM[currentDay]) currentDay = Object.keys(PROGRAM)[0];
-  if(!PROGRAM[programDay]) programDay = Object.keys(PROGRAM)[0];
-  document.getElementById('exerciseSelect').innerHTML = '';
-  document.getElementById('statsDayRack').innerHTML = '';
-  renderDayRack();
-  renderExercises();
-  renderProgressView();
+  refreshAfterDataChange();
   flashExportMsg(`✓ Imported ${describeSessions(sessions)}`);
 }
 
