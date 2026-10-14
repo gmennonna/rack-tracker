@@ -329,7 +329,7 @@
     border-radius:var(--radius-pill);
     padding:5px;
   }
-  .stats-toggle-btn{
+  .stats-toggle-btn, .metric-btn{
     flex:1;
     background:none;
     border:none;
@@ -341,7 +341,7 @@
     border-radius:var(--radius-pill);
     cursor:pointer;
   }
-  .stats-toggle-btn.active{
+  .stats-toggle-btn.active, .metric-btn.active{
     background:var(--coral);
     color:#1A0F0C;
   }
@@ -784,6 +784,11 @@
       <button class="stats-toggle-btn active" data-mode="exercise">By exercise</button>
       <button class="stats-toggle-btn" data-mode="day">By workout</button>
     </div>
+    <div class="stats-toggle">
+      <button class="metric-btn" data-metric="e1rm">e1RM</button>
+      <button class="metric-btn" data-metric="volume">Volume</button>
+      <button class="metric-btn" data-metric="max">Max</button>
+    </div>
     <select class="progress-select" id="exerciseSelect"></select>
     <div class="day-rack" id="statsDayRack" style="display:none;"></div>
     <div id="progressCharts"></div>
@@ -882,13 +887,33 @@ const DEFAULT_PROGRAM = {
 
 const STORAGE_KEY = 'rack-sessions';
 const PROGRAM_KEY = 'rack-program';
+const METRIC_KEY = 'rack-progress-metric';
+
+// Chart metrics; bodyweight exercises (no load ever logged) fall back to rep counts.
+const METRICS = {
+  e1rm:   { title:'estimated 1RM per session', value: sets=> roundHalf(bestE1RM(sets)),
+            bwTitle:'max reps per session',     bwValue: maxReps },
+  volume: { title:'total volume per session',  value: sets=> Math.round(totalVolume(sets)),
+            bwTitle:'total reps per session',   bwValue: totalReps },
+  max:    { title:'max load per session',      value: maxWeight,
+            bwTitle:'max reps per session',     bwValue: maxReps }
+};
 let sessions = [];
 let PROGRAM = loadProgram();
 let currentDay = 'A';
 let currentView = 'log';
 let editingIndex = null;
 let statsMode = 'exercise';
+let progressMetric = loadProgressMetric();
 let programDay = 'A';
+
+function loadProgressMetric(){
+  try{
+    const m = localStorage.getItem(METRIC_KEY);
+    if(m && METRICS[m]) return m;
+  }catch(e){}
+  return 'e1rm';
+}
 
 function dayColorClass(day){
   return day==='A' ? 'day-a' : day==='B' ? 'day-b' : 'day-c';
@@ -937,6 +962,7 @@ async function loadSessions(){
   }catch(e){
     sessions = [];
   }
+  if(recomputePRs()) await persistSessions();
 }
 
 async function persistSessions(){
@@ -971,6 +997,16 @@ function bindNav(){
       statsMode = btn.dataset.mode;
       document.getElementById('exerciseSelect').style.display = statsMode==='exercise' ? '' : 'none';
       document.getElementById('statsDayRack').style.display = statsMode==='day' ? 'flex' : 'none';
+      renderProgressView();
+    });
+  });
+
+  document.querySelectorAll('.metric-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.metric===progressMetric);
+    btn.addEventListener('click', ()=>{
+      progressMetric = btn.dataset.metric;
+      try{ localStorage.setItem(METRIC_KEY, progressMetric); }catch(e){}
+      document.querySelectorAll('.metric-btn').forEach(b=>b.classList.toggle('active', b===btn));
       renderProgressView();
     });
   });
@@ -1019,17 +1055,86 @@ function maxWeight(sets){
   return sets.reduce((m,s)=> Math.max(m, parseFloat(s.weight)||0), 0);
 }
 
-function getAllTimeMax(exerciseName, excludeIndex){
-  let best = 0;
+function num(v){
+  const n = parseFloat(v);
+  return n > 0 ? n : 0;
+}
+
+// Sets with both a load and reps; empty or zero entries are ignored.
+function validSets(sets){
+  return sets.filter(s=> num(s.weight) > 0 && num(s.reps) > 0);
+}
+
+// Epley: weight × (1 + reps/30); a single rep is the weight itself.
+function bestE1RM(sets){
+  return validSets(sets).reduce((best, s)=>{
+    const w = num(s.weight), r = num(s.reps);
+    return Math.max(best, r === 1 ? w : w * (1 + r/30));
+  }, 0);
+}
+
+function totalVolume(sets){
+  return validSets(sets).reduce((sum, s)=> sum + num(s.weight) * num(s.reps), 0);
+}
+
+function maxReps(sets){
+  return sets.reduce((m,s)=> Math.max(m, num(s.reps)), 0);
+}
+
+function totalReps(sets){
+  return sets.reduce((t,s)=> t + num(s.reps), 0);
+}
+
+function round1(v){ return Math.round(v*10)/10; }
+function roundHalf(v){ return Math.round(v*2)/2; }
+
+// Bodyweight = reps logged but never any load, across history (plus optional unsaved sets).
+function isBodyweight(exerciseName, excludeIndex, extraSets = []){
+  const all = [...extraSets];
+  sessions.forEach((s, idx)=>{
+    if(idx === excludeIndex) return;
+    const ex = s.exercises.find(e=>e.name===exerciseName);
+    if(ex) all.push(...ex.sets);
+  });
+  return all.some(s=> num(s.reps) > 0) && !all.some(s=> num(s.weight) > 0);
+}
+
+// Value a PR is judged on: e1RM, or max reps for bodyweight exercises.
+function prScore(sets, bodyweight){
+  return bodyweight ? maxReps(sets) : round1(bestE1RM(sets));
+}
+
+function getAllTimeBest(exerciseName, excludeIndex){
+  const best = { e1rm:0, max:0, reps:0 };
   sessions.forEach((s, idx)=>{
     if(idx === excludeIndex) return;
     const ex = s.exercises.find(e=>e.name===exerciseName);
     if(ex){
-      const w = maxWeight(ex.sets);
-      if(w > best) best = w;
+      best.e1rm = Math.max(best.e1rm, bestE1RM(ex.sets));
+      best.max = Math.max(best.max, maxWeight(ex.sets));
+      best.reps = Math.max(best.reps, maxReps(ex.sets));
     }
   });
   return best;
+}
+
+// Re-derives every stored isPR flag in chronological order. Returns true if any flag changed.
+function recomputePRs(){
+  const order = sessions.map((s, idx)=> idx)
+    .sort((a,b)=> (new Date(sessions[a].date) - new Date(sessions[b].date)) || a - b);
+  const best = {};
+  const bwCache = {};
+  let changed = false;
+  order.forEach(idx=>{
+    sessions[idx].exercises.forEach(ex=>{
+      if(!(ex.name in bwCache)) bwCache[ex.name] = isBodyweight(ex.name);
+      const score = prScore(ex.sets, bwCache[ex.name]);
+      const isPR = score > 0 && score > (best[ex.name] || 0);
+      if(isPR) best[ex.name] = score;
+      if(!!ex.isPR !== isPR){ ex.isPR = isPR; changed = true; }
+    });
+  });
+  return changed;
 }
 
 /* ---------------- EXERCISE LIST (LOG VIEW) ---------------- */
@@ -1055,8 +1160,15 @@ function renderExercises(){
       lastHtml = `<div class="last-time">First time logging this exercise</div>`;
     }
 
-    const recordW = getAllTimeMax(ex.name, editingIndex);
-    const recordHtml = recordW > 0 ? `<div class="last-time record-line">Personal record: <b>${recordW} kg</b></div>` : '';
+    const best = getAllTimeBest(ex.name, editingIndex);
+    const recordParts = [];
+    if(isBodyweight(ex.name, editingIndex)){
+      if(best.reps > 0) recordParts.push(`Best <b>${best.reps} reps</b>`);
+    } else {
+      if(best.e1rm > 0) recordParts.push(`Best e1RM <b>${roundHalf(best.e1rm)} kg</b>`);
+      if(best.max > 0) recordParts.push(`max <b>${best.max} kg</b>`);
+    }
+    const recordHtml = recordParts.length ? `<div class="last-time record-line">${recordParts.join(' · ')}</div>` : '';
 
     const editingExercise = editingSession ? editingSession.exercises.find(e=>e.name===ex.name) : null;
 
@@ -1152,7 +1264,6 @@ async function saveSession(){
   const cards = document.querySelectorAll('.exercise-card');
   const exercises = [];
   let anyData = false;
-  let hasPR = false;
 
   cards.forEach(card=>{
     const exIdx = parseInt(card.dataset.exIdx);
@@ -1166,11 +1277,8 @@ async function saveSession(){
       if(weight || reps) anyData = true;
       sets.push({ weight, reps });
     });
-    const newMax = maxWeight(sets);
-    const prevMax = getAllTimeMax(exDef.name, editingIndex);
-    const isPR = newMax > 0 && newMax > prevMax;
-    if(isPR) hasPR = true;
-    exercises.push({ name: exDef.name, sets, isPR });
+    // isPR is filled in by recomputePRs() once the session is stored.
+    exercises.push({ name: exDef.name, sets, isPR: false });
   });
 
   if(!anyData){
@@ -1200,6 +1308,9 @@ async function saveSession(){
     });
   }
 
+  // Editing an older session can shift records in later ones, so re-derive them all.
+  recomputePRs();
+  const hasPR = exercises.some(e=>e.isPR);
   await persistSessions();
 
   document.getElementById('savedMsg').style.color = 'var(--mint)';
@@ -1250,13 +1361,17 @@ function renderProgressView(){
 }
 
 function buildChartCard(name){
+  const bw = isBodyweight(name);
+  const metric = METRICS[progressMetric];
+  const valueOf = bw ? metric.bwValue : metric.value;
+  const unit = bw ? 'reps' : 'kg';
+
   const points = sessions
-    .filter(s=> s.exercises.some(e=>e.name===name && e.sets.some(st=>st.weight)))
-    .sort((a,b)=> new Date(a.date)-new Date(b.date))
-    .map(s=>{
-      const ex = s.exercises.find(e=>e.name===name);
-      return { date: s.date, weight: maxWeight(ex.sets) };
-    });
+    .map(s=> ({ date: s.date, ex: s.exercises.find(e=>e.name===name) }))
+    .filter(p=> p.ex)
+    .map(p=> ({ date: p.date, weight: valueOf(p.ex.sets) }))
+    .filter(p=> p.weight > 0)
+    .sort((a,b)=> new Date(a.date)-new Date(b.date));
 
   if(points.length===0) return null;
 
@@ -1279,12 +1394,12 @@ function buildChartCard(name){
 
   const first = points[0].weight;
   const latest = points[points.length-1].weight;
-  const diff = (latest - first);
-  const diffLabel = diff > 0 ? `+${diff} kg since first log` : diff < 0 ? `${diff} kg since first log` : 'unchanged since first log';
+  const diff = round1(latest - first);
+  const diffLabel = diff > 0 ? `+${diff} ${unit} since first log` : diff < 0 ? `${diff} ${unit} since first log` : 'unchanged since first log';
   const diffClass = diff > 0 ? 'delta-up' : diff < 0 ? 'delta-down' : 'delta-flat';
 
   card.innerHTML = `
-    <div class="chart-title">${name} — max load per session</div>
+    <div class="chart-title">${name} — ${bw ? metric.bwTitle : metric.title}</div>
     <div class="bars">${bars}</div>
     <div style="margin-top:14px;"><span class="delta-badge ${diffClass}">${diffLabel}</span></div>
   `;
@@ -1373,6 +1488,7 @@ function renderHistoryView(){
     btn.addEventListener('click', async ()=>{
       const idx = parseInt(btn.dataset.idx);
       sessions.splice(idx,1);
+      recomputePRs();
       await persistSessions();
       renderHistoryView();
       renderDayRack();
