@@ -345,6 +345,20 @@
     background:var(--coral);
     color:#1A0F0C;
   }
+  .export-btn{
+    width:100%;
+    background:var(--card);
+    border:1.5px solid var(--stroke);
+    color:var(--text);
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:14px;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .export-btn:active{opacity:.88;}
   .progress-select{
     width:100%;
     background:var(--card);
@@ -792,6 +806,11 @@
     <select class="progress-select" id="exerciseSelect"></select>
     <div class="day-rack" id="statsDayRack" style="display:none;"></div>
     <div id="progressCharts"></div>
+    <button class="export-btn" id="exportReportBtn">Export report</button>
+    <button class="export-btn" id="exportBackupBtn">Export backup</button>
+    <button class="export-btn" id="importBackupBtn">Import backup</button>
+    <input type="file" id="importBackupInput" accept=".json,application/json" style="display:none;">
+    <div class="saved-msg" id="exportMsg" style="height:auto; min-height:14px; line-height:1.5;"></div>
   </div>
 
   <!-- HISTORY VIEW -->
@@ -1009,6 +1028,19 @@ function bindNav(){
       document.querySelectorAll('.metric-btn').forEach(b=>b.classList.toggle('active', b===btn));
       renderProgressView();
     });
+  });
+
+  // Bound once here: the select is emptied and repopulated whenever the program changes.
+  document.getElementById('exerciseSelect').addEventListener('change', renderChart);
+
+  document.getElementById('exportReportBtn').addEventListener('click', exportReport);
+  document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+  const importInput = document.getElementById('importBackupInput');
+  document.getElementById('importBackupBtn').addEventListener('click', ()=> importInput.click());
+  importInput.addEventListener('change', ()=>{
+    const file = importInput.files[0];
+    importInput.value = '';  // allow re-selecting the same file later
+    if(file) importBackup(file);
   });
 
   document.getElementById('programAddBtn').addEventListener('click', addProgramExercise);
@@ -1337,7 +1369,6 @@ function renderProgressView(){
       opt.value = name; opt.textContent = name;
       select.appendChild(opt);
     });
-    select.addEventListener('change', renderChart);
   }
 
   const dayRack = document.getElementById('statsDayRack');
@@ -1439,6 +1470,357 @@ function renderDayStats(day){
   if(!anyCard){
     container.innerHTML = `<div class="empty-state"><span class="big">No data yet</span>You haven't logged any weights for ${PROGRAM[day].label} exercises yet.</div>`;
   }
+}
+
+/* ---------------- EXPORT REPORT ---------------- */
+// Local calendar date as YYYY-MM-DD (toISOString would shift late-evening sessions to UTC).
+function isoDate(d){
+  d = new Date(d);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function mondayOf(d){
+  const m = new Date(d);
+  m.setHours(0,0,0,0);
+  m.setDate(m.getDate() - (m.getDay() + 6) % 7);
+  return m;
+}
+
+function fmtNum(v){
+  return String(round1(v));
+}
+
+function mdCell(s){
+  return String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+}
+
+function hasSetData(sets){
+  return sets.some(s=> num(s.weight) > 0 || num(s.reps) > 0);
+}
+
+function compactSets(sets, bodyweight){
+  return sets
+    .filter(s=> num(s.weight) > 0 || num(s.reps) > 0)
+    .map(s=>{
+      const w = num(s.weight) > 0 ? fmtNum(num(s.weight)) : (bodyweight ? 'BW' : '—');
+      const r = num(s.reps) > 0 ? num(s.reps) : '?';
+      return `${w}×${r}`;
+    })
+    .join(', ');
+}
+
+function pctChange(from, to){
+  if(!(from > 0)) return '';
+  const p = round1((to - from) / from * 100);
+  return ` (${p > 0 ? '+' : ''}${p}%)`;
+}
+
+function signed(v, unit){
+  const r = round1(v);
+  return `${r > 0 ? '+' : ''}${r} ${unit}`;
+}
+
+function avg(values){
+  return values.length ? values.reduce((a,b)=>a+b, 0) / values.length : 0;
+}
+
+function buildReportMarkdown(){
+  const sorted = [...sessions].sort((a,b)=> new Date(a.date) - new Date(b.date));
+  const firstDate = new Date(sorted[0].date);
+  const lastDate = new Date(sorted[sorted.length-1].date);
+  const spanDays = Math.round((mondayOf(lastDate) - mondayOf(firstDate)) / 86400000);
+  const weeksSpanned = spanDays / 7 + 1;
+  const perWeek = round1(sorted.length / weeksSpanned);
+
+  // Program order first, then any exercise only present in history.
+  const names = allExerciseNames();
+  sorted.forEach(s=> s.exercises.forEach(e=>{ if(!names.includes(e.name)) names.push(e.name); }));
+  const bwByName = {};
+  names.forEach(n=> bwByName[n] = isBodyweight(n));
+
+  const L = [];
+  L.push('# Rack training report', '');
+  L.push(`- Generated: ${isoDate(new Date())}`);
+  L.push(`- Period: ${isoDate(firstDate)} → ${isoDate(lastDate)}`);
+  L.push(`- Total sessions: ${sorted.length}`);
+  L.push(`- Average frequency: ${perWeek} sessions/week (over ${weeksSpanned} calendar weeks, Monday-based)`);
+  L.push('');
+  L.push('## Metrics');
+  L.push('');
+  L.push('- Units: weights in kg; dates are ISO (YYYY-MM-DD), local time.');
+  L.push('- **e1RM** (estimated one-rep max), Epley formula: `weight × (1 + reps / 30)`; a 1-rep set counts as its weight. Per session, the best set is used.');
+  L.push('- **Volume** = Σ weight × reps over all sets of the exercise in a session.');
+  L.push('- **Max** = heaviest weight lifted in a session (sets logged without reps included).');
+  L.push('- Sets with empty weight or reps are ignored for e1RM and volume.');
+  L.push('- **Bodyweight exercises** (no load ever logged) are measured in reps: e1RM → max reps in a set, volume → total reps. Marked "BW".');
+  L.push('- A **PR** is a session whose e1RM (max reps for bodyweight) beats every earlier session of that exercise; the first log of an exercise counts as a PR.');
+  L.push('- Set notation in the log: `weight×reps`; `BW` = bodyweight, `?` = reps not logged, `—` = weight not logged.');
+  L.push('');
+
+  // ---- Per-exercise summary
+  L.push('## Exercise summary', '');
+  L.push('| Exercise | Unit | Sessions | First | Last | e1RM start → now → best | Δ e1RM start→now | Max start → now | Avg volume first 3 | Avg volume last 3 |');
+  L.push('|---|---|---|---|---|---|---|---|---|---|');
+  names.forEach(name=>{
+    const bw = bwByName[name];
+    const logs = sorted
+      .map(s=> ({ date: s.date, ex: s.exercises.find(e=>e.name===name) }))
+      .filter(p=> p.ex && hasSetData(p.ex.sets));
+    if(logs.length===0) return;
+
+    const strength = logs.map(p=> bw ? maxReps(p.ex.sets) : bestE1RM(p.ex.sets)).filter(v=> v > 0);
+    const volumes = logs.map(p=> bw ? totalReps(p.ex.sets) : totalVolume(p.ex.sets)).filter(v=> v > 0);
+    const maxes = logs.map(p=> maxWeight(p.ex.sets)).filter(v=> v > 0);
+    const unit = bw ? 'reps' : 'kg';
+
+    let e1rmCell = '—', deltaCell = '—';
+    if(strength.length){
+      const start = strength[0], now = strength[strength.length-1], best = Math.max(...strength);
+      e1rmCell = `${fmtNum(start)} → ${fmtNum(now)} → ${fmtNum(best)}`;
+      deltaCell = signed(now - start, unit) + pctChange(start, now);
+    }
+    const maxCell = bw ? 'n/a (BW)' : maxes.length ? `${fmtNum(maxes[0])} → ${fmtNum(maxes[maxes.length-1])}` : '—';
+    const volFirst = volumes.length ? fmtNum(avg(volumes.slice(0,3))) : '—';
+    const volLast = volumes.length ? fmtNum(avg(volumes.slice(-3))) : '—';
+
+    L.push(`| ${mdCell(name)} | ${bw ? 'BW reps' : 'kg'} | ${logs.length} | ${isoDate(logs[0].date)} | ${isoDate(logs[logs.length-1].date)} | ${e1rmCell} | ${deltaCell} | ${maxCell} | ${volFirst} | ${volLast} |`);
+  });
+  L.push('');
+
+  // ---- Weekly volume (every calendar week in the period, including empty ones)
+  L.push('## Weekly volume', '');
+  L.push('| Week (Mon) | Sessions | Volume (kg) | Bodyweight reps |');
+  L.push('|---|---|---|---|');
+  const weeks = new Map();
+  for(let w = mondayOf(firstDate); w <= lastDate; w.setDate(w.getDate()+7)){
+    weeks.set(isoDate(w), { sessions:0, volume:0, reps:0 });
+  }
+  sorted.forEach(s=>{
+    const wk = weeks.get(isoDate(mondayOf(s.date)));
+    if(!wk) return;
+    wk.sessions++;
+    s.exercises.forEach(ex=>{
+      if(bwByName[ex.name]) wk.reps += totalReps(ex.sets);
+      else wk.volume += totalVolume(ex.sets);
+    });
+  });
+  weeks.forEach((wk, key)=>{
+    L.push(`| ${key} | ${wk.sessions} | ${Math.round(wk.volume)} | ${wk.reps} |`);
+  });
+  L.push('');
+
+  // ---- PRs
+  L.push('## Personal records', '');
+  const prs = [];
+  sorted.forEach(s=> s.exercises.forEach(ex=>{
+    if(!ex.isPR) return;
+    const bw = bwByName[ex.name];
+    prs.push(`| ${isoDate(s.date)} | ${mdCell(ex.name)} | ${bw ? `${maxReps(ex.sets)} reps (BW)` : `e1RM ${fmtNum(bestE1RM(ex.sets))} kg`} |`);
+  }));
+  if(prs.length){
+    L.push('| Date | Exercise | Value |', '|---|---|---|', ...prs);
+  } else {
+    L.push('_No PRs recorded._');
+  }
+  L.push('');
+
+  // ---- Full log
+  L.push('## Session log', '');
+  sorted.forEach(s=>{
+    const dayLabel = PROGRAM[s.day] ? `${s.day} — ${PROGRAM[s.day].label}` : s.day;
+    L.push(`### ${isoDate(s.date)} · Day ${dayLabel}`, '');
+    s.exercises.forEach(ex=>{
+      if(!hasSetData(ex.sets)) return;
+      const bw = bwByName[ex.name];
+      const stats = bw
+        ? `max ${maxReps(ex.sets)} reps · total ${totalReps(ex.sets)} reps`
+        : `e1RM ${fmtNum(bestE1RM(ex.sets))} kg · volume ${Math.round(totalVolume(ex.sets))} kg`;
+      L.push(`- ${ex.name}: ${compactSets(ex.sets, bw)} — ${stats}${ex.isPR ? ' · PR' : ''}`);
+    });
+    if(s.note) L.push(`- Note: ${s.note.replace(/\n/g, ' ')}`);
+    L.push('');
+  });
+
+  return L.join('\n');
+}
+
+function flashExportMsg(text, isError){
+  const msg = document.getElementById('exportMsg');
+  msg.style.color = isError ? 'var(--warn)' : 'var(--mint)';
+  msg.textContent = text;
+  clearTimeout(flashExportMsg.timer);
+  flashExportMsg.timer = setTimeout(()=>{ msg.textContent=''; }, isError ? 6000 : 3000);
+}
+
+// Mobile/PWA: share sheet ("Save to Files", AirDrop, apps); desktop: Blob download.
+// `types` are tried in order because some platforms reject e.g. text/markdown but accept text/plain.
+async function shareOrDownload(content, filename, types){
+  if(navigator.canShare){
+    for(const type of types){
+      const file = new File([content], filename, { type });
+      if(!navigator.canShare({ files:[file] })) continue;
+      try{
+        await navigator.share({ files:[file], title: filename });
+        return;
+      }catch(e){
+        if(e.name === 'AbortError') return;
+        break;
+      }
+    }
+  }
+
+  const url = URL.createObjectURL(new Blob([content], { type: types[0] }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+  flashExportMsg(`✓ ${filename} downloaded`);
+}
+
+async function exportReport(){
+  if(sessions.length===0){
+    flashExportMsg('No sessions to export yet', true);
+    return;
+  }
+  await shareOrDownload(buildReportMarkdown(), `rack-report-${isoDate(new Date())}.md`, ['text/markdown', 'text/plain']);
+}
+
+/* ---------------- BACKUP / IMPORT ---------------- */
+const BACKUP_VERSION = 1;
+const PREV_SESSIONS_KEY = 'rack-sessions-prev';
+const PREV_PROGRAM_KEY = 'rack-program-prev';
+
+function buildBackup(){
+  return {
+    app: 'rack',
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    sessions,
+    program: PROGRAM
+  };
+}
+
+async function exportBackup(){
+  const json = JSON.stringify(buildBackup(), null, 2);
+  await shareOrDownload(json, `rack-backup-${isoDate(new Date())}.json`, ['application/json', 'text/plain']);
+}
+
+function isPlainObject(v){
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function isSetValue(v){
+  return v === null || v === undefined || (Number.isFinite(Number(v)) && Number(v) >= 0);
+}
+
+// Returns an error message, or null when the backup has the expected shape.
+function validateBackup(data){
+  if(!isPlainObject(data)) return 'Not a Rack backup (expected a JSON object).';
+  if(!Number.isInteger(data.version)) return 'Missing or invalid "version".';
+  if(data.version > BACKUP_VERSION) return `Backup version ${data.version} is newer than this app supports (${BACKUP_VERSION}).`;
+  if(!Array.isArray(data.sessions)) return '"sessions" must be an array.';
+
+  for(let i = 0; i < data.sessions.length; i++){
+    const s = data.sessions[i];
+    const where = `Session ${i+1}`;
+    if(!isPlainObject(s)) return `${where} is not an object.`;
+    if(typeof s.date !== 'string' || isNaN(Date.parse(s.date))) return `${where} has an invalid date.`;
+    if(typeof s.day !== 'string' || !s.day) return `${where} has no program day.`;
+    if(s.note !== undefined && typeof s.note !== 'string') return `${where} has an invalid note.`;
+    if(!Array.isArray(s.exercises)) return `${where} has no exercise list.`;
+    for(const ex of s.exercises){
+      if(!isPlainObject(ex) || typeof ex.name !== 'string' || !ex.name) return `${where} has an exercise without a name.`;
+      if(!Array.isArray(ex.sets)) return `${where}, ${ex.name}: sets must be an array.`;
+      if(ex.isPR !== undefined && typeof ex.isPR !== 'boolean') return `${where}, ${ex.name}: invalid PR flag.`;
+      for(const st of ex.sets){
+        if(!isPlainObject(st) || !isSetValue(st.weight) || !isSetValue(st.reps)) return `${where}, ${ex.name}: invalid set.`;
+      }
+    }
+  }
+
+  if(!isPlainObject(data.program) || Object.keys(data.program).length === 0) return 'Missing or invalid "program".';
+  for(const [day, def] of Object.entries(data.program)){
+    if(!isPlainObject(def) || typeof def.label !== 'string' || !Array.isArray(def.exercises)) return `Program day ${day} is invalid.`;
+    for(const ex of def.exercises){
+      if(!isPlainObject(ex) || typeof ex.name !== 'string' || !ex.name || !Number.isInteger(ex.sets) || ex.sets < 1){
+        return `Program day ${day} has an invalid exercise.`;
+      }
+    }
+  }
+  return null;
+}
+
+function describeSessions(list){
+  if(list.length === 0) return '0 sessions';
+  const dates = list.map(s=> new Date(s.date)).sort((a,b)=> a - b);
+  return `${list.length} session${list.length===1 ? '' : 's'} from ${isoDate(dates[0])} to ${isoDate(dates[dates.length-1])}`;
+}
+
+// Replaces sessions and program with a validated backup, keeping the previous data under *-prev keys.
+async function applyBackup(data){
+  try{
+    localStorage.setItem(PREV_SESSIONS_KEY, JSON.stringify(sessions));
+    localStorage.setItem(PREV_PROGRAM_KEY, JSON.stringify(PROGRAM));
+  }catch(e){
+    throw new Error('Could not save a copy of the current data, import cancelled.');
+  }
+
+  sessions = JSON.parse(JSON.stringify(data.sessions));
+  const program = JSON.parse(JSON.stringify(data.program));
+  Object.keys(DEFAULT_PROGRAM).forEach(d=>{ if(!program[d]) program[d] = JSON.parse(JSON.stringify(DEFAULT_PROGRAM[d])); });
+  PROGRAM = program;
+
+  recomputePRs();
+  await persistSessions();
+  persistProgram();
+}
+
+async function importBackup(file){
+  if(!/\.json$/i.test(file.name)){
+    flashExportMsg('Please choose a .json backup file.', true);
+    return;
+  }
+
+  let data;
+  try{
+    data = JSON.parse(await file.text());
+  }catch(e){
+    flashExportMsg('This file is not valid JSON. Nothing was changed.', true);
+    return;
+  }
+
+  const error = validateBackup(data);
+  if(error){
+    flashExportMsg(`Invalid backup: ${error} Nothing was changed.`, true);
+    return;
+  }
+
+  const ok = confirm(
+    `The backup contains ${describeSessions(data.sessions)}.\n` +
+    `Current data: ${describeSessions(sessions)}.\n\n` +
+    `Replace the current data? (A copy is kept so the import can be undone.)`
+  );
+  if(!ok) return;
+
+  try{
+    await applyBackup(data);
+  }catch(e){
+    flashExportMsg(e.message, true);
+    return;
+  }
+
+  editingIndex = null;
+  if(!PROGRAM[currentDay]) currentDay = Object.keys(PROGRAM)[0];
+  if(!PROGRAM[programDay]) programDay = Object.keys(PROGRAM)[0];
+  document.getElementById('exerciseSelect').innerHTML = '';
+  document.getElementById('statsDayRack').innerHTML = '';
+  renderDayRack();
+  renderExercises();
+  renderProgressView();
+  flashExportMsg(`✓ Imported ${describeSessions(sessions)}`);
 }
 
 /* ---------------- HISTORY VIEW ---------------- */
