@@ -1110,7 +1110,9 @@
     </div>
     <div id="bodySection" style="display:none;">
       <button class="export-btn body-import-btn" id="importRenphoBtn">Import Renpho CSV</button>
-      <input type="file" id="importRenphoInput" accept=".csv,text/csv" style="display:none;">
+      <!-- No accept filter: Android/Drive often label CSVs as text/plain or application/vnd.ms-excel and grey them out;
+           the content is validated by its Renpho headers instead. -->
+      <input type="file" id="importRenphoInput" style="display:none;">
       <div class="saved-msg" id="bodyMsg" style="height:auto; min-height:14px; line-height:1.5; margin-bottom:8px;"></div>
       <div id="bodyContent"></div>
     </div>
@@ -3204,8 +3206,9 @@ function setProgressSection(section){
 }
 
 async function importRenphoCsv(file){
-  if(!/\.csv$/i.test(file.name)){
-    flashMsg('bodyMsg', 'Please choose the .csv file exported from Renpho.', true);
+  // Any file can be picked (Drive may drop the .csv name/type): the Renpho headers decide. Size guard only.
+  if(file.size > 20 * 1024 * 1024){
+    flashMsg('bodyMsg', 'This file is too large to be a Renpho CSV. Nothing was changed.', true);
     return;
   }
   let text;
