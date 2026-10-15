@@ -256,6 +256,38 @@
     outline:none;
     border-color:var(--coral);
   }
+  /* Suggested targets sit in the placeholder: grey until a real value is typed or confirmed. */
+  .set-row input::placeholder{
+    color:var(--muted);
+    opacity:.7;
+    font-weight:500;
+  }
+  .sets-table td.done-cell{ width:48px; padding:4px 0 4px 4px; }
+  .set-done-btn{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    border:1.5px solid var(--stroke);
+    background:transparent;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .set-done-btn svg{ width:18px; height:18px; }
+  .set-row.done .set-done-btn{
+    background:var(--mint);
+    border-color:var(--mint);
+    color:#08211A;
+  }
+  .set-row.done .set-num{ color:var(--mint); }
+  @media (prefers-reduced-motion: reduce){
+    .set-done-btn{ transition:none; }
+  }
   .set-num{
     color:var(--muted);
     font-weight:700;
@@ -1414,9 +1446,7 @@ function findExerciseHistory(name){
   return found;
 }
 
-function renderSuggestionHtml(ex){
-  const [last, prev] = findExerciseHistory(ex.name);
-  const sug = suggestProgression(ex, last, prev);
+function renderSuggestionHtml(sug){
   if(sug.status === 'first'){
     const target = sug.range ? `for ${sug.range.min} reps` : 'with good form';
     return `<div class="last-time suggest-line">First time — pick a weight you can do ${target}</div>`;
@@ -1425,6 +1455,95 @@ function renderSuggestionHtml(ex){
     .map(s=> `<span class="sug-set ${s.change}">${s.weight == null ? 'BW' : fmtNum(s.weight)}×${s.reps}</span>`)
     .join(' · ');
   return `<div class="last-time suggest-line">Today: ${targets}<div class="suggest-summary">${formatProgressionSummary(sug)}</div></div>`;
+}
+
+/* ---------------- SET INPUTS: suggested placeholders + ✓ confirm ---------------- */
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17.5 19 7.5"/></svg>';
+
+// Today's target for set i as placeholder text; generic hints when there is no suggestion.
+function setPlaceholders(sug, i){
+  const s = sug && sug.status === 'progress' ? sug.sets[i] : null;
+  if(!s) return { weight:'kg', reps:'reps' };
+  return { weight: s.weight == null ? 'BW' : fmtNum(s.weight), reps: String(s.reps) };
+}
+
+// ✓ fills only the empty fields from the target (typed values win; bodyweight copies reps only).
+// The set counts as done once it holds a real value, so a second tap changes nothing.
+function confirmSetValues(current, target){
+  const next = { weight: current.weight, reps: current.reps };
+  if(target){
+    if(next.weight === '' && target.weight != null) next.weight = String(target.weight);
+    if(next.reps === '') next.reps = String(target.reps);
+  }
+  next.done = next.weight !== '' || next.reps !== '';
+  return next;
+}
+
+// Only real input values are saved; placeholders never reach this point.
+function readSetsFromInputs(weights, reps){
+  return weights.map((w, i)=> ({
+    weight: w ? parseFloat(w) : null,
+    reps: reps[i] ? parseInt(reps[i]) : null
+  }));
+}
+
+// 'weighted' | 'bodyweight' | 'unknown' (no usable history yet: may be either).
+function exerciseLoadMode(history){
+  if(!history.length) return 'unknown';
+  return progressionSets(history[0]).bodyweight ? 'bodyweight' : 'weighted';
+}
+
+// Sets with one field filled and the other still empty. Bodyweight sets only need reps, and a
+// missing weight is only flagged when the exercise is known to be loaded.
+function countIncompleteSets(sets, mode){
+  let missingReps = 0, missingWeight = 0;
+  sets.forEach(s=>{
+    const hasW = num(s.weight) > 0, hasR = num(s.reps) > 0;
+    if(hasW && !hasR) missingReps++;
+    else if(hasR && !hasW && mode === 'weighted') missingWeight++;
+  });
+  return { missingReps, missingWeight };
+}
+
+// When editing a past session, only sets changed in this edit are checked: sets that were already
+// incomplete in the original save stay as they were without a prompt. No original → all sets.
+function changedSets(sets, originalSets){
+  if(!originalSets) return sets;
+  const same = (a, b)=> (a == null ? null : Number(a)) === (b == null ? null : Number(b));
+  return sets.filter((s, i)=>{
+    const o = originalSets[i] || {};
+    return !(same(s.weight, o.weight) && same(s.reps, o.reps));
+  });
+}
+
+function incompleteSetsMessage(missingReps, missingWeight){
+  const part = (n, what)=> `${n} set${n === 1 ? ' has' : 's have'} missing ${what}`;
+  const parts = [];
+  if(missingReps) parts.push(part(missingReps, 'reps'));
+  if(missingWeight) parts.push(part(missingWeight, 'weight'));
+  return parts.length ? `${parts.join(' and ')} — save anyway?` : '';
+}
+
+// Editing a past session: saved values, generic placeholders, no ✓ column.
+function buildSetRowsHtml(ex, sug, editing, editingExercise){
+  let rows = '';
+  for(let i = 0; i < ex.sets; i++){
+    const prefill = editingExercise && editingExercise.sets[i] ? editingExercise.sets[i] : null;
+    const wVal = prefill && prefill.weight != null ? ` value="${prefill.weight}"` : '';
+    const rVal = prefill && prefill.reps != null ? ` value="${prefill.reps}"` : '';
+    const ph = editing ? { weight:'kg', reps:'reps' } : setPlaceholders(sug, i);
+    const doneCell = editing ? '' :
+      `<td class="done-cell"><button type="button" class="set-done-btn" data-set="${i}" aria-label="Confirm set ${i+1}" aria-pressed="false">${CHECK_SVG}</button></td>`;
+    rows += `
+        <tr class="set-row">
+          <td class="set-num">${i+1}</td>
+          <td><input type="number" inputmode="decimal" class="w-input" placeholder="${ph.weight}" data-set="${i}" min="0" step="0.5"${wVal}></td>
+          <td><input type="number" inputmode="numeric" class="r-input" placeholder="${ph.reps}" data-set="${i}" min="0"${rVal}></td>
+          ${doneCell}
+        </tr>`;
+  }
+  const head = `<tr><th class="num">Set</th><th>Weight</th><th>Reps</th>${editing ? '' : '<th></th>'}</tr>`;
+  return { head, rows };
 }
 
 /* ---------------- EXERCISE LIST (LOG VIEW) ---------------- */
@@ -1460,23 +1579,15 @@ function renderExercises(){
     }
     const recordHtml = recordParts.length ? `<div class="last-time record-line">${recordParts.join(' · ')}</div>` : '';
 
+    // One suggestion per exercise feeds both the "Today" line and the set placeholders.
     // A suggestion for today makes no sense while correcting a past session.
-    const suggestionHtml = editingSession ? '' : renderSuggestionHtml(ex);
+    const history = findExerciseHistory(ex.name);
+    const sug = editingSession ? null : suggestProgression(ex, history[0], history[1]);
+    const suggestionHtml = sug ? renderSuggestionHtml(sug) : '';
+    card.dataset.loadMode = exerciseLoadMode(history);
 
     const editingExercise = editingSession ? editingSession.exercises.find(e=>e.name===ex.name) : null;
-
-    let rows = '';
-    for(let i=0;i<ex.sets;i++){
-      const prefill = editingExercise && editingExercise.sets[i] ? editingExercise.sets[i] : null;
-      const wVal = prefill && prefill.weight != null ? ` value="${prefill.weight}"` : '';
-      const rVal = prefill && prefill.reps != null ? ` value="${prefill.reps}"` : '';
-      rows += `
-        <tr class="set-row">
-          <td class="set-num">${i+1}</td>
-          <td><input type="number" inputmode="decimal" class="w-input" placeholder="kg" data-set="${i}" min="0" step="0.5"${wVal}></td>
-          <td><input type="number" inputmode="numeric" class="r-input" placeholder="reps" data-set="${i}" min="0"${rVal}></td>
-        </tr>`;
-    }
+    const setRows = buildSetRowsHtml(ex, sug, !!editingSession, editingExercise);
 
     card.innerHTML = `
       <div class="exercise-head">
@@ -1490,8 +1601,8 @@ function renderExercises(){
       ${suggestionHtml}
       ${recordHtml}
       <table class="sets-table">
-        <thead><tr><th class="num">Set</th><th>Weight</th><th>Reps</th></tr></thead>
-        <tbody>${rows}</tbody>
+        <thead>${setRows.head}</thead>
+        <tbody>${setRows.rows}</tbody>
       </table>
       <div class="plate-load" id="load-${exIdx}"></div>
       ${ex.note ? `<div class="note-row">${ex.note}</div>` : ''}
@@ -1506,15 +1617,41 @@ function renderExercises(){
       seg.className = 'plate-seg';
       loadBar.appendChild(seg);
     }
+    const wInputs = card.querySelectorAll('.w-input');
+    const rInputs = card.querySelectorAll('.r-input');
+    const setRowEls = card.querySelectorAll('.set-row');
     function updateLoad(){
-      const wInputs = card.querySelectorAll('.w-input');
       const segs = loadBar.querySelectorAll('.plate-seg');
       wInputs.forEach((inp, i)=>{
-        segs[i].classList.toggle('filled', !!inp.value && parseFloat(inp.value) > 0);
+        const loaded = !!inp.value && parseFloat(inp.value) > 0;
+        segs[i].classList.toggle('filled', loaded || setRowEls[i].classList.contains('done'));
       });
     }
+    // Also used by restoreTodayInputs() to bring back confirmed sets after a reorder.
+    card._setDone = (i, done)=>{
+      if(!setRowEls[i]) return;
+      setRowEls[i].classList.toggle('done', done);
+      const btn = setRowEls[i].querySelector('.set-done-btn');
+      if(btn) btn.setAttribute('aria-pressed', done ? 'true' : 'false');
+      updateLoad();
+    };
+    inputs.forEach(inp=> inp.addEventListener('input', ()=>{
+      const i = parseInt(inp.dataset.set);
+      // Emptying both fields of a confirmed set makes it "to do" again.
+      if(!wInputs[i].value && !rInputs[i].value && setRowEls[i].classList.contains('done')) card._setDone(i, false);
+      updateLoad();
+    }));
+    card.querySelectorAll('.set-done-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const i = parseInt(btn.dataset.set);
+        const target = sug && sug.status === 'progress' ? sug.sets[i] : null;
+        const next = confirmSetValues({ weight: wInputs[i].value, reps: rInputs[i].value }, target);
+        wInputs[i].value = next.weight;
+        rInputs[i].value = next.reps;
+        card._setDone(i, next.done);
+      });
+    });
     updateLoad();
-    inputs.forEach(inp=> inp.addEventListener('input', updateLoad));
   });
 
   const noteVal = editingSession && editingSession.note ? editingSession.note : '';
@@ -1558,19 +1695,22 @@ async function saveSession(){
   const cards = document.querySelectorAll('.exercise-card');
   const exercises = [];
   let anyData = false;
+  let missingReps = 0, missingWeight = 0;
 
   cards.forEach(card=>{
     const exIdx = parseInt(card.dataset.exIdx);
     const exDef = PROGRAM[currentDay].exercises[exIdx];
-    const wInputs = card.querySelectorAll('.w-input');
-    const rInputs = card.querySelectorAll('.r-input');
-    const sets = [];
-    wInputs.forEach((inp, i)=>{
-      const weight = inp.value ? parseFloat(inp.value) : null;
-      const reps = rInputs[i].value ? parseInt(rInputs[i].value) : null;
-      if(weight || reps) anyData = true;
-      sets.push({ weight, reps });
-    });
+    const sets = readSetsFromInputs(
+      [...card.querySelectorAll('.w-input')].map(i=> i.value),
+      [...card.querySelectorAll('.r-input')].map(i=> i.value)
+    );
+    if(sets.some(s=> s.weight || s.reps)) anyData = true;
+    const originalSets = editingIndex !== null
+      ? ((sessions[editingIndex].exercises.find(e=> e.name === exDef.name) || {}).sets || [])
+      : null;
+    const incomplete = countIncompleteSets(changedSets(sets, originalSets), card.dataset.loadMode);
+    missingReps += incomplete.missingReps;
+    missingWeight += incomplete.missingWeight;
     // isPR is filled in by recomputePRs() once the session is stored.
     exercises.push({ name: exDef.name, sets, isPR: false });
   });
@@ -1582,6 +1722,10 @@ async function saveSession(){
     setTimeout(()=>{ msg.textContent=''; msg.style.color='var(--mint)'; }, 2500);
     return;
   }
+
+  // Half-filled sets (the other field still only shows a placeholder): Cancel goes back to finish them.
+  const incompleteMsg = incompleteSetsMessage(missingReps, missingWeight);
+  if(incompleteMsg && !confirm(incompleteMsg)) return;
 
   const note = document.getElementById('sessionNote').value.trim();
 
@@ -2431,7 +2575,8 @@ function captureTodayInputs(){
     if(!exercises[idx]) return;
     const values = {
       weights: [...card.querySelectorAll('.w-input')].map(i=> i.value),
-      reps: [...card.querySelectorAll('.r-input')].map(i=> i.value)
+      reps: [...card.querySelectorAll('.r-input')].map(i=> i.value),
+      done: [...card.querySelectorAll('.set-row')].map(row=> row.classList.contains('done'))
     };
     byEx.set(exercises[idx], values);
     byKey[keys[idx]] = values;
@@ -2453,6 +2598,8 @@ function restoreTodayInputs(state){
     if(!saved) return;
     card.querySelectorAll('.w-input').forEach((inp, i)=>{ if(saved.weights[i] !== undefined) inp.value = saved.weights[i]; });
     card.querySelectorAll('.r-input').forEach((inp, i)=>{ if(saved.reps[i] !== undefined) inp.value = saved.reps[i]; });
+    // Confirmed state comes back with the values; placeholders were recomputed by renderExercises().
+    if(card._setDone) (saved.done || []).forEach((done, i)=>{ if(done) card._setDone(i, true); });
     const first = card.querySelector('.w-input');
     if(first) first.dispatchEvent(new Event('input'));  // refresh the plate-load bar
   });
