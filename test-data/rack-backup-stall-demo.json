@@ -1,0 +1,926 @@
+{
+  "app": "rack",
+  "version": 1,
+  "exportedAt": "2026-10-15T18:51:34.144Z",
+  "sessions": [
+    {
+      "date": "2026-08-19T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 140,
+              "reps": 8
+            },
+            {
+              "weight": 140,
+              "reps": 8
+            },
+            {
+              "weight": 140,
+              "reps": 7
+            },
+            {
+              "weight": 140,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 60,
+              "reps": 8
+            },
+            {
+              "weight": 60,
+              "reps": 8
+            },
+            {
+              "weight": 60,
+              "reps": 7
+            },
+            {
+              "weight": 60,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 10
+            },
+            {
+              "weight": 50,
+              "reps": 10
+            },
+            {
+              "weight": 50,
+              "reps": 9
+            },
+            {
+              "weight": 50,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-08-21T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 6
+            },
+            {
+              "weight": null,
+              "reps": 6
+            },
+            {
+              "weight": null,
+              "reps": 5
+            },
+            {
+              "weight": null,
+              "reps": 5
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-08-26T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 145,
+              "reps": 8
+            },
+            {
+              "weight": 145,
+              "reps": 8
+            },
+            {
+              "weight": 145,
+              "reps": 7
+            },
+            {
+              "weight": 145,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 62.5,
+              "reps": 8
+            },
+            {
+              "weight": 62.5,
+              "reps": 8
+            },
+            {
+              "weight": 62.5,
+              "reps": 7
+            },
+            {
+              "weight": 62.5,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 52.5,
+              "reps": 10
+            },
+            {
+              "weight": 52.5,
+              "reps": 10
+            },
+            {
+              "weight": 52.5,
+              "reps": 9
+            },
+            {
+              "weight": 52.5,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-08-28T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 7
+            },
+            {
+              "weight": null,
+              "reps": 7
+            },
+            {
+              "weight": null,
+              "reps": 6
+            },
+            {
+              "weight": null,
+              "reps": 6
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-02T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 150,
+              "reps": 8
+            },
+            {
+              "weight": 150,
+              "reps": 8
+            },
+            {
+              "weight": 150,
+              "reps": 7
+            },
+            {
+              "weight": 150,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 8
+            },
+            {
+              "weight": 65,
+              "reps": 8
+            },
+            {
+              "weight": 65,
+              "reps": 7
+            },
+            {
+              "weight": 65,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 10
+            },
+            {
+              "weight": 55,
+              "reps": 10
+            },
+            {
+              "weight": 55,
+              "reps": 9
+            },
+            {
+              "weight": 55,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-04T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 8
+            },
+            {
+              "weight": null,
+              "reps": 8
+            },
+            {
+              "weight": null,
+              "reps": 7
+            },
+            {
+              "weight": null,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-09T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 155,
+              "reps": 8
+            },
+            {
+              "weight": 155,
+              "reps": 8
+            },
+            {
+              "weight": 155,
+              "reps": 7
+            },
+            {
+              "weight": 155,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 9
+            },
+            {
+              "weight": 65,
+              "reps": 9
+            },
+            {
+              "weight": 65,
+              "reps": 8
+            },
+            {
+              "weight": 65,
+              "reps": 8
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 57.5,
+              "reps": 10
+            },
+            {
+              "weight": 57.5,
+              "reps": 10
+            },
+            {
+              "weight": 57.5,
+              "reps": 9
+            },
+            {
+              "weight": 57.5,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-11T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 8
+            },
+            {
+              "weight": null,
+              "reps": 8
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-16T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 10
+            },
+            {
+              "weight": 160,
+              "reps": 10
+            },
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 67.5,
+              "reps": 8
+            },
+            {
+              "weight": 67.5,
+              "reps": 8
+            },
+            {
+              "weight": 67.5,
+              "reps": 7
+            },
+            {
+              "weight": 67.5,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 60,
+              "reps": 10
+            },
+            {
+              "weight": 60,
+              "reps": 10
+            },
+            {
+              "weight": 60,
+              "reps": 9
+            },
+            {
+              "weight": 60,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-18T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 10
+            },
+            {
+              "weight": null,
+              "reps": 10
+            },
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-26T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 8
+            },
+            {
+              "weight": 160,
+              "reps": 8
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 70,
+              "reps": 8
+            },
+            {
+              "weight": 70,
+              "reps": 8
+            },
+            {
+              "weight": 70,
+              "reps": 7
+            },
+            {
+              "weight": 70,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 60,
+              "reps": 10
+            },
+            {
+              "weight": 60,
+              "reps": 10
+            },
+            {
+              "weight": 60,
+              "reps": 9
+            },
+            {
+              "weight": 60,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-09-28T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 10
+            },
+            {
+              "weight": null,
+              "reps": 10
+            },
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-10-03T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 10
+            },
+            {
+              "weight": 160,
+              "reps": 10
+            },
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 72.5,
+              "reps": 8
+            },
+            {
+              "weight": 72.5,
+              "reps": 8
+            },
+            {
+              "weight": 72.5,
+              "reps": 7
+            },
+            {
+              "weight": 72.5,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 57.5,
+              "reps": 9
+            },
+            {
+              "weight": 57.5,
+              "reps": 9
+            },
+            {
+              "weight": 57.5,
+              "reps": 8
+            },
+            {
+              "weight": 57.5,
+              "reps": 8
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-10-05T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 8
+            },
+            {
+              "weight": null,
+              "reps": 8
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-10-10T16:00:00.000Z",
+      "day": "A",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 8
+            },
+            {
+              "weight": 160,
+              "reps": 8
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": [
+            {
+              "weight": 75,
+              "reps": 8
+            },
+            {
+              "weight": 75,
+              "reps": 8
+            },
+            {
+              "weight": 75,
+              "reps": 7
+            },
+            {
+              "weight": 75,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": [
+            {
+              "weight": 52.5,
+              "reps": 8
+            },
+            {
+              "weight": 52.5,
+              "reps": 8
+            },
+            {
+              "weight": 52.5,
+              "reps": 7
+            },
+            {
+              "weight": 52.5,
+              "reps": 7
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    },
+    {
+      "date": "2026-10-12T16:00:00.000Z",
+      "day": "C",
+      "note": "",
+      "exercises": [
+        {
+          "name": "Pull-up",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 10
+            },
+            {
+              "weight": null,
+              "reps": 10
+            },
+            {
+              "weight": null,
+              "reps": 9
+            },
+            {
+              "weight": null,
+              "reps": 9
+            }
+          ],
+          "isPR": false
+        }
+      ]
+    }
+  ],
+  "program": {
+    "A": {
+      "label": "Leg Day",
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": 4,
+          "reps": "8-10",
+          "injury": "tailbone",
+          "note": "Moderate angle (not too reclined). Stop the range of motion if it bothers your tailbone."
+        },
+        {
+          "name": "Barbell Bench Press",
+          "sets": 4,
+          "reps": "6-8"
+        },
+        {
+          "name": "Close-Grip Lat Pulldown",
+          "sets": 4,
+          "reps": "8-10"
+        },
+        {
+          "name": "Leg Extension",
+          "sets": 3,
+          "reps": "12-15",
+          "injury": "tailbone",
+          "note": "Isolated exercise, low stress on the tailbone — should be safe."
+        },
+        {
+          "name": "Lateral Raises",
+          "sets": 3,
+          "reps": "12-15"
+        }
+      ]
+    },
+    "B": {
+      "label": "Pull Day",
+      "exercises": [
+        {
+          "name": "Barbell Hip Thrust",
+          "sets": 4,
+          "reps": "8-10",
+          "injury": "tailbone",
+          "note": "Replaces the deadlift. Stop immediately if it bothers your tailbone."
+        },
+        {
+          "name": "Dumbbell Military Press",
+          "sets": 4,
+          "reps": "6-8"
+        },
+        {
+          "name": "Chest-Supported Row",
+          "sets": 4,
+          "reps": "8-10"
+        },
+        {
+          "name": "Leg Curl",
+          "sets": 3,
+          "reps": "10-12",
+          "injury": "adductor",
+          "note": "Isolated, safe for the adductor while it heals."
+        },
+        {
+          "name": "Bicep Curl",
+          "sets": 3,
+          "reps": "10-12"
+        },
+        {
+          "name": "Tricep Pushdown",
+          "sets": 3,
+          "reps": "10-12"
+        }
+      ]
+    },
+    "C": {
+      "label": "Finisher",
+      "exercises": [
+        {
+          "name": "Incline Dumbbell Press",
+          "sets": 4,
+          "reps": "8-10"
+        },
+        {
+          "name": "Pull-up",
+          "sets": 4,
+          "reps": "8-10",
+          "note": "Add extra weight if you can do more than 10-12 clean reps, or use an assistance band if you can't reach 8-10."
+        },
+        {
+          "name": "Adductor Machine",
+          "sets": 3,
+          "reps": "12-15",
+          "injury": "adductor",
+          "note": "Left side only, or very light load on the right — only if authorized by your physical therapist."
+        },
+        {
+          "name": "Face Pull",
+          "sets": 3,
+          "reps": "12-15"
+        }
+      ]
+    }
+  }
+}
