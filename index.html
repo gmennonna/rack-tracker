@@ -508,6 +508,77 @@
     margin-top:6px;
   }
   .export-btn:active{opacity:.88;}
+
+  /* ---- Progress: Lifts / Body ---- */
+  .section-btn{
+    flex:1;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:12.5px;
+    padding:9px 8px;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+  }
+  .section-btn.active{ background:var(--text); color:var(--bg); }
+  .body-import-btn{ margin:0 0 6px; }
+  .body-range{ margin-bottom:14px; }
+  .range-btn{
+    flex:1;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    font-size:12px;
+    padding:8px;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+  }
+  .range-btn.active{ background:var(--coral); color:#1A0F0C; }
+  .body-tiles{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .body-tile{
+    background:var(--card2);
+    border-radius:12px;
+    padding:10px 11px;
+    min-width:0;
+  }
+  .body-tile-label{ font-size:10.5px; color:var(--muted); font-weight:600; }
+  .body-tile-value{ font-size:19px; font-weight:700; color:var(--text); margin:2px 0; }
+  .body-unit{ font-size:11px; font-weight:600; color:var(--muted); }
+  .body-delta{ font-size:10.5px; font-weight:600; }
+  .body-delta.flat{ color:var(--muted); }
+  .body-delta.good{ color:var(--mint); }
+  .body-delta.bad{ color:var(--warn); }
+  .body-note{ font-size:12px; color:var(--muted); padding:16px 0; text-align:center; }
+  .body-subtitle{ margin-top:18px; }
+  .line-chart{ display:block; width:100%; height:auto; overflow:visible; }
+  .lc-grid{ stroke:var(--stroke); stroke-width:.6; }
+  .lc-ref{ stroke:var(--muted); stroke-width:.8; stroke-dasharray:3 3; opacity:.7; }
+  .lc-label{ fill:var(--muted); font-size:8.5px; font-family:'Poppins', sans-serif; }
+  .lc-raw{ fill:var(--muted); opacity:.45; }
+  .lc-ma, .lc-fat, .lc-muscle, .lc-strength{ fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+  .lc-ma{ stroke:var(--coral); }
+  .lc-fat{ stroke:var(--yellow); }
+  .lc-muscle{ stroke:var(--mint); }
+  .lc-strength{ stroke:var(--purple); }
+  .lc-marker{ stroke:none; }
+  .lc-ma.lc-marker{ fill:var(--coral); }
+  .lc-fat.lc-marker{ fill:var(--yellow); }
+  .lc-muscle.lc-marker{ fill:var(--mint); }
+  .lc-strength.lc-marker{ fill:var(--purple); }
+  .lc-legend{ display:flex; gap:14px; margin-top:8px; font-size:10.5px; color:var(--muted); font-weight:600; flex-wrap:wrap; }
+  .lg::before{ content:''; display:inline-block; width:12px; height:3px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+  .lg-raw::before{ width:6px; height:6px; border-radius:50%; background:var(--muted); opacity:.6; }
+  .lg-ma::before{ background:var(--coral); }
+  .lg-fat::before{ background:var(--yellow); }
+  .lg-muscle::before{ background:var(--mint); }
   .progress-select{
     width:100%;
     background:var(--card);
@@ -749,7 +820,10 @@
     pointer-events:none;
     transition:opacity .2s ease, transform .2s ease;
     z-index:80;
-    white-space:nowrap;
+    width:max-content;
+    max-width:calc(100vw - 48px);
+    text-align:center;
+    line-height:1.4;
   }
   .toast.show{
     opacity:1;
@@ -1016,18 +1090,30 @@
 
   <!-- PROGRESS VIEW -->
   <div id="view-progress" style="display:none;">
-    <div class="stats-toggle">
-      <button class="stats-toggle-btn active" data-mode="exercise">By exercise</button>
-      <button class="stats-toggle-btn" data-mode="day">By workout</button>
+    <div class="stats-toggle section-toggle">
+      <button class="section-btn active" data-section="lifts">Lifts</button>
+      <button class="section-btn" data-section="body">Body</button>
     </div>
-    <div class="stats-toggle">
-      <button class="metric-btn" data-metric="e1rm">e1RM</button>
-      <button class="metric-btn" data-metric="volume">Volume</button>
-      <button class="metric-btn" data-metric="max">Max</button>
+    <div id="liftsSection">
+      <div class="stats-toggle">
+        <button class="stats-toggle-btn active" data-mode="exercise">By exercise</button>
+        <button class="stats-toggle-btn" data-mode="day">By workout</button>
+      </div>
+      <div class="stats-toggle">
+        <button class="metric-btn" data-metric="e1rm">e1RM</button>
+        <button class="metric-btn" data-metric="volume">Volume</button>
+        <button class="metric-btn" data-metric="max">Max</button>
+      </div>
+      <select class="progress-select" id="exerciseSelect"></select>
+      <div class="day-rack" id="statsDayRack" style="display:none;"></div>
+      <div id="progressCharts"></div>
     </div>
-    <select class="progress-select" id="exerciseSelect"></select>
-    <div class="day-rack" id="statsDayRack" style="display:none;"></div>
-    <div id="progressCharts"></div>
+    <div id="bodySection" style="display:none;">
+      <button class="export-btn body-import-btn" id="importRenphoBtn">Import Renpho CSV</button>
+      <input type="file" id="importRenphoInput" accept=".csv,text/csv" style="display:none;">
+      <div class="saved-msg" id="bodyMsg" style="height:auto; min-height:14px; line-height:1.5; margin-bottom:8px;"></div>
+      <div id="bodyContent"></div>
+    </div>
     <button class="export-btn" id="exportReportBtn">Export report</button>
     <button class="export-btn" id="exportBackupBtn">Export backup</button>
     <button class="export-btn" id="importBackupBtn">Import backup</button>
@@ -1143,6 +1229,18 @@ const STALL_PAUSE_DAYS = 14;            // a longer gap restarts the window afte
 const STALL_GENERAL_SHARE = 0.5;        // share of eligible lifts stalled/regressing for a program-wide alert
 const STALL_GENERAL_MIN_EXERCISES = 3;  // minimum eligible lifts before a program-wide alert
 
+// Body composition (Renpho import).
+const BODY_KEY = 'rack-body';
+const PREV_BODY_KEY = 'rack-body-prev';
+const PROGRESS_SECTION_KEY = 'rack-progress-section';
+const BODY_MA_DAYS = 7;                 // moving-average window in calendar days
+const BODY_MA_MIN_POINTS = 3;           // daily values needed in the window for an average point
+const BODY_CHANGE_DAYS = 28;            // "vs 4 weeks ago" on the moving average
+const BODY_CHANGE_TOLERANCE_DAYS = 3;   // how far before that date a reference point may be
+const BODY_RANGE_DAYS = 90;             // default chart range ("90d")
+const STRENGTH_MIN_SESSIONS = 3;        // lifts needed in the strength index
+const STRENGTH_CARRY_WEEKS = 4;         // weeks a lift's last e1RM is carried forward before it drops out
+
 // Chart metrics; bodyweight exercises (no load ever logged) fall back to rep counts.
 const METRICS = {
   e1rm:   { title:'estimated 1RM per session', value: sets=> roundHalf(bestE1RM(sets)),
@@ -1160,6 +1258,9 @@ let editingIndex = null;
 let statsMode = 'exercise';
 let progressMetric = loadProgressMetric();
 let programDay = 'A';
+let body = [];                       // Renpho weigh-ins, sorted by date + time
+let progressSection = loadProgressSection();
+let bodyRange = 'recent';            // 'recent' (BODY_RANGE_DAYS) | 'all'
 
 function loadProgressMetric(){
   try{
@@ -1167,6 +1268,14 @@ function loadProgressMetric(){
     if(m && METRICS[m]) return m;
   }catch(e){}
   return 'e1rm';
+}
+
+function loadProgressSection(){
+  try{
+    return localStorage.getItem(PROGRESS_SECTION_KEY) === 'body' ? 'body' : 'lifts';
+  }catch(e){
+    return 'lifts';
+  }
 }
 
 function dayColorClass(day){
@@ -1219,6 +1328,27 @@ async function loadSessions(){
     sessions = [];
   }
   if(recomputePRs()) await persistSessions();
+  loadBody();
+}
+
+function loadBody(){
+  try{
+    const raw = localStorage.getItem(BODY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    body = Array.isArray(parsed) ? parsed : [];
+  }catch(e){
+    body = [];
+  }
+}
+
+function persistBody(){
+  try{
+    localStorage.setItem(BODY_KEY, JSON.stringify(body));
+    return true;
+  }catch(e){
+    console.error('Body storage error', e);
+    return false;
+  }
 }
 
 async function persistSessions(){
@@ -1265,6 +1395,17 @@ function bindNav(){
       document.querySelectorAll('.metric-btn').forEach(b=>b.classList.toggle('active', b===btn));
       renderProgressView();
     });
+  });
+
+  document.querySelectorAll('.section-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> setProgressSection(btn.dataset.section));
+  });
+  const renphoInput = document.getElementById('importRenphoInput');
+  document.getElementById('importRenphoBtn').addEventListener('click', ()=> renphoInput.click());
+  renphoInput.addEventListener('change', ()=>{
+    const file = renphoInput.files[0];
+    renphoInput.value = '';  // allow re-importing the same (updated) file
+    if(file) importRenphoCsv(file);
   });
 
   // Bound once here: the select is emptied and repopulated whenever the program changes.
@@ -2083,6 +2224,7 @@ function renderProgressView(){
   }
 
   updateUndoButton();
+  setProgressSection(progressSection);
   if(statsMode==='exercise') renderChart();
   else renderDayStats(dayRack.querySelector('.day-plate.active')?.dataset.day || 'A');
 }
@@ -2321,6 +2463,9 @@ function buildReportMarkdown(){
   }
   L.push('');
 
+  // ---- Body composition (weekly averages + strength index in one table)
+  L.push(...bodyReportSection(body, sorted));
+
   // ---- Full log
   L.push('## Session log', '');
   sorted.forEach(s=>{
@@ -2341,12 +2486,17 @@ function buildReportMarkdown(){
   return L.join('\n');
 }
 
-function flashExportMsg(text, isError){
-  const msg = document.getElementById('exportMsg');
+function flashMsg(id, text, isError){
+  const msg = document.getElementById(id);
   msg.style.color = isError ? 'var(--warn)' : 'var(--mint)';
   msg.textContent = text;
-  clearTimeout(flashExportMsg.timer);
-  flashExportMsg.timer = setTimeout(()=>{ msg.textContent=''; }, isError ? 6000 : 3000);
+  flashMsg.timers = flashMsg.timers || {};
+  clearTimeout(flashMsg.timers[id]);
+  flashMsg.timers[id] = setTimeout(()=>{ msg.textContent=''; }, isError ? 6000 : 3000);
+}
+
+function flashExportMsg(text, isError){
+  flashMsg('exportMsg', text, isError);
 }
 
 // Mobile/PWA: share sheet ("Save to Files", AirDrop, apps); desktop: Blob download.
@@ -2386,7 +2536,8 @@ async function exportReport(){
 }
 
 /* ---------------- BACKUP / IMPORT ---------------- */
-const BACKUP_VERSION = 1;
+// v2 adds body (weigh-ins); v1 backups are still accepted and leave body data untouched.
+const BACKUP_VERSION = 2;
 const PREV_SESSIONS_KEY = 'rack-sessions-prev';
 const PREV_PROGRAM_KEY = 'rack-program-prev';
 
@@ -2396,7 +2547,8 @@ function buildBackup(){
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     sessions,
-    program: PROGRAM
+    program: PROGRAM,
+    body
   };
 }
 
@@ -2454,7 +2606,29 @@ function validateBackup(data){
       }
     }
   }
+  if(data.body !== undefined){
+    if(!Array.isArray(data.body)) return '"body" must be an array.';
+    for(let i = 0; i < data.body.length; i++){
+      const error = validateWeighIn(data.body[i]);
+      if(error) return `Weigh-in ${i+1}: ${error}`;
+    }
+  }
   return null;
+}
+
+function validateWeighIn(w){
+  if(!isPlainObject(w)) return 'not an object.';
+  if(!isValidIsoDay(w.date)) return 'invalid date.';
+  if(typeof w.time !== 'string' || !/^\d{2}:\d{2}(:\d{2})?$/.test(w.time)) return 'invalid time.';
+  if(typeof w.weight !== 'number' || !(w.weight > 0)) return 'invalid weight.';
+  for(const f of BODY_COMPOSITION_FIELDS){
+    if(w[f] != null && !(typeof w[f] === 'number' && Number.isFinite(w[f]) && w[f] >= 0)) return `invalid ${f}.`;
+  }
+  return null;
+}
+
+function describeWeighIns(list){
+  return `${list.length} weigh-in${list.length === 1 ? '' : 's'}`;
 }
 
 function describeSessions(list){
@@ -2468,13 +2642,15 @@ async function applyBackup(data){
   try{
     localStorage.setItem(PREV_SESSIONS_KEY, JSON.stringify(sessions));
     localStorage.setItem(PREV_PROGRAM_KEY, JSON.stringify(PROGRAM));
+    localStorage.setItem(PREV_BODY_KEY, JSON.stringify(body));
   }catch(e){
     throw new Error('Could not save a copy of the current data, import cancelled.');
   }
-  await replaceData(data.sessions, data.program);
+  await replaceData(data.sessions, data.program, data.body);
 }
 
-async function replaceData(newSessions, newProgram){
+// newBody undefined (v1 backup, or a copy made before body data existed) keeps the current body data.
+async function replaceData(newSessions, newProgram, newBody){
   sessions = JSON.parse(JSON.stringify(newSessions));
   const program = JSON.parse(JSON.stringify(newProgram));
   Object.keys(DEFAULT_PROGRAM).forEach(d=>{ if(!program[d]) program[d] = JSON.parse(JSON.stringify(DEFAULT_PROGRAM[d])); });
@@ -2483,25 +2659,32 @@ async function replaceData(newSessions, newProgram){
   recomputePRs();
   await persistSessions();
   persistProgram();
+  if(newBody !== undefined){
+    body = JSON.parse(JSON.stringify(newBody));
+    persistBody();
+  }
 }
 
 // Data saved before the last import: null if there is none, { error } if it is unreadable.
 function readUndoData(){
-  let rawSessions, rawProgram;
+  let rawSessions, rawProgram, rawBody;
   try{
     rawSessions = localStorage.getItem(PREV_SESSIONS_KEY);
     rawProgram = localStorage.getItem(PREV_PROGRAM_KEY);
+    rawBody = localStorage.getItem(PREV_BODY_KEY);
   }catch(e){
     return null;
   }
-  if(rawSessions === null && rawProgram === null) return null;
+  if(rawSessions === null && rawProgram === null && rawBody === null) return null;
 
   let data;
   try{
     data = {
       version: BACKUP_VERSION,
       sessions: rawSessions !== null ? JSON.parse(rawSessions) : sessions,
-      program: rawProgram !== null ? JSON.parse(rawProgram) : PROGRAM
+      program: rawProgram !== null ? JSON.parse(rawProgram) : PROGRAM,
+      // Copies made before body data existed have none: body is then left as it is.
+      body: rawBody !== null ? JSON.parse(rawBody) : undefined
     };
   }catch(e){
     return { error: 'The saved pre-import copy is not valid JSON.' };
@@ -2511,11 +2694,12 @@ function readUndoData(){
 }
 
 async function restorePreviousData(data){
-  await replaceData(data.sessions, data.program);
+  await replaceData(data.sessions, data.program, data.body);
   // Drop the copy so the same undo cannot be applied twice.
   try{
     localStorage.removeItem(PREV_SESSIONS_KEY);
     localStorage.removeItem(PREV_PROGRAM_KEY);
+    localStorage.removeItem(PREV_BODY_KEY);
   }catch(e){}
 }
 
@@ -2546,7 +2730,8 @@ async function undoImport(){
   }
 
   const ok = confirm(
-    `Restore the data from before the last import: ${describeSessions(undo.data.sessions)}?\n` +
+    `Restore the data from before the last import: ${describeSessions(undo.data.sessions)}` +
+    `${undo.data.body ? ` and ${describeWeighIns(undo.data.body)}` : ''}?\n` +
     `Current data (${describeSessions(sessions)}) will be replaced. This undo can only be done once.`
   );
   if(!ok) return;
@@ -2577,8 +2762,10 @@ async function importBackup(file){
   }
 
   const ok = confirm(
-    `The backup contains ${describeSessions(data.sessions)}.\n` +
-    `Current data: ${describeSessions(sessions)}.\n\n` +
+    `The backup contains ${describeSessions(data.sessions)}` +
+    `${data.body ? ` and ${describeWeighIns(data.body)}` : ''}.\n` +
+    `Current data: ${describeSessions(sessions)} and ${describeWeighIns(body)}.\n` +
+    `${data.body ? '' : 'Body data is not in this backup and will be kept.\n'}\n` +
     `Replace the current data? (A copy is kept so the import can be undone.)`
   );
   if(!ok) return;
@@ -2592,6 +2779,459 @@ async function importBackup(file){
 
   refreshAfterDataChange();
   flashExportMsg(`✓ Imported ${describeSessions(sessions)}`);
+}
+
+/* ---------------- BODY COMPOSITION (Renpho) ---------------- */
+// CSV header names, matched by name so a column reorder in a future Renpho version does not break the import.
+const RENPHO_COLUMNS = {
+  date: 'Date',
+  time: 'Time',
+  weight: 'Weight(kg)',
+  bodyFatPct: 'Body Fat Percentage(%)',
+  fatMass: 'Body Fat Mass(kg)',
+  skeletalMuscleMass: 'Skeletal Muscle Mass(kg)',
+  fatFreeMass: 'Fat-Free Mass(kg)',
+  visceralFat: 'Visceral Fat'
+};
+const BODY_COMPOSITION_FIELDS = ['bodyFatPct', 'fatMass', 'skeletalMuscleMass', 'fatFreeMass', 'visceralFat'];
+
+// Minimal RFC 4180 reader: quoted fields, "" escapes, CRLF/LF, trailing commas; blank lines dropped.
+function parseCsvRows(text){
+  const rows = [];
+  let row = [], field = '', quoted = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(quoted){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else quoted = false;
+      } else field += c;
+    } else if(c === '"') quoted = true;
+    else if(c === ','){ row.push(field); field = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && text[i+1] === '\n') i++;
+      row.push(field); rows.push(row); row = []; field = '';
+    } else field += c;
+  }
+  if(field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=> r.some(f=> f.trim() !== ''));
+}
+
+// Pure. { weighIns, skipped } or { error } (nothing usable, nothing should be stored).
+function parseRenphoCsv(text){
+  const rows = parseCsvRows(String(text || '').replace(/^﻿/, ''));
+  if(rows.length === 0) return { error: 'The file is empty.' };
+  const header = rows[0].map(h=> h.trim());
+  const col = {};
+  Object.entries(RENPHO_COLUMNS).forEach(([key, name])=> col[key] = header.indexOf(name));
+  const missing = ['date', 'time', 'weight'].filter(k=> col[k] < 0).map(k=> RENPHO_COLUMNS[k]);
+  if(missing.length){
+    if(col.weight < 0 && header.some(h=> /^Weight\(lb/i.test(h))) return { error: 'This CSV uses pounds: set Renpho units to kg and export again.' };
+    return { error: `Not a Renpho CSV: missing column${missing.length > 1 ? 's' : ''} ${missing.join(', ')}.` };
+  }
+
+  const weighIns = [];
+  let skipped = 0;
+  rows.slice(1).forEach(r=>{
+    const cell = k=> col[k] >= 0 && r[col[k]] !== undefined ? r[col[k]].trim() : '';
+    const dm = cell('date').match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/);
+    const tm = cell('time').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    const weight = parseFloat(cell('weight'));
+    const date = dm ? `${dm[1]}-${dm[2].padStart(2, '0')}-${dm[3].padStart(2, '0')}` : '';
+    if(!dm || !tm || !(weight > 0) || !isValidIsoDay(date)){ skipped++; return; }
+    // Composition at 0 means the scale could not read impedance (dry feet, socks): unknown, not zero.
+    const comp = k=>{ const v = parseFloat(cell(k)); return v > 0 ? v : null; };
+    const w = { date, time: `${tm[1].padStart(2, '0')}:${tm[2]}:${tm[3] || '00'}`, weight };
+    BODY_COMPOSITION_FIELDS.forEach(f=> w[f] = comp(f));
+    weighIns.push(w);
+  });
+  return { weighIns, skipped };
+}
+
+function isValidIsoDay(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+  if(!m) return false;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3];
+}
+
+// 'YYYY-MM-DD' as a local date (new Date('YYYY-MM-DD') would be UTC midnight).
+function parseLocalDay(s){
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// Whole-day index for calendar arithmetic, free of DST and time zones.
+function dayIndex(s){
+  const [y, m, d] = s.split('-').map(Number);
+  return Math.round(Date.UTC(y, m - 1, d) / DAY_MS);
+}
+
+function weekKey(day){
+  return isoDate(mondayOf(parseLocalDay(day)));
+}
+
+function weighInKey(w){
+  return `${w.date} ${w.time}`;
+}
+
+// Pure. A weigh-in is identified by date + time: existing ones are never touched, only new ones added.
+function mergeWeighIns(existing, incoming){
+  const keys = new Set(existing.map(weighInKey));
+  const added = [];
+  incoming.forEach(w=>{
+    const k = weighInKey(w);
+    if(!keys.has(k)){ keys.add(k); added.push(w); }
+  });
+  const merged = [...existing, ...added].sort((a, b)=> weighInKey(a) < weighInKey(b) ? -1 : weighInKey(a) > weighInKey(b) ? 1 : 0);
+  const dates = added.map(w=> w.date).sort();
+  return { merged, added, from: dates[0] || null, to: dates[dates.length - 1] || null };
+}
+
+function renphoImportMessage(addedCount, from, to, skipped){
+  let text = addedCount
+    ? `Imported ${addedCount} new weigh-in${addedCount === 1 ? '' : 's'} (${from === to ? from : `${from} → ${to}`})`
+    : 'No new weigh-ins';
+  if(skipped) text += ` · ${skipped} row${skipped === 1 ? '' : 's'} skipped`;
+  return text;
+}
+
+// One reading per day: the first weigh-in's weight; each composition value from the day's first
+// weigh-in that has it. All weigh-ins stay stored.
+function dailyFirst(weighIns){
+  const byDate = new Map();
+  [...weighIns].sort((a, b)=> weighInKey(a) < weighInKey(b) ? -1 : 1).forEach(w=>{
+    if(!byDate.has(w.date)) byDate.set(w.date, []);
+    byDate.get(w.date).push(w);
+  });
+  return [...byDate].map(([date, list])=>{
+    const day = { date, time: list[0].time, weight: list[0].weight };
+    BODY_COMPOSITION_FIELDS.forEach(f=>{
+      const withValue = list.find(w=> w[f] != null);
+      day[f] = withValue ? withValue[f] : null;
+    });
+    return day;
+  });
+}
+
+function meanOrNull(values){
+  const v = values.filter(x=> x != null);
+  return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : null;
+}
+
+// Trailing average over the last `days` calendar days (gaps do not stretch the window);
+// a point needs BODY_MA_MIN_POINTS daily values in its window.
+function movingAverage(daily, field, days = BODY_MA_DAYS){
+  const pts = daily.filter(d=> d[field] != null).map(d=> ({ date: d.date, day: dayIndex(d.date), value: d[field] }));
+  const out = [];
+  pts.forEach(p=>{
+    const win = pts.filter(q=> q.day <= p.day && q.day > p.day - days);
+    if(win.length >= BODY_MA_MIN_POINTS) out.push({ date: p.date, value: meanOrNull(win.map(q=> q.value)) });
+  });
+  return out;
+}
+
+// Latest moving-average value vs the one `days` earlier (or the closest before it, within tolerance).
+function changeOver(ma, days = BODY_CHANGE_DAYS){
+  if(!ma.length) return null;
+  const last = ma[ma.length - 1];
+  const target = dayIndex(last.date) - days;
+  const ref = [...ma].reverse().find(p=> dayIndex(p.date) <= target && dayIndex(p.date) >= target - BODY_CHANGE_TOLERANCE_DAYS);
+  return ref ? { from: ref.value, to: last.value, delta: last.value - ref.value, fromDate: ref.date } : null;
+}
+
+// Fat mass and skeletal muscle as kg change from the first moving-average value in the range,
+// so one odd early reading does not shift the whole chart.
+function recompositionSeries(daily, sinceDay){
+  const rel = field=>{
+    const ma = movingAverage(daily, field).filter(p=> dayIndex(p.date) >= sinceDay);
+    return ma.length ? ma.map(p=> ({ date: p.date, value: p.value - ma[0].value })) : [];
+  };
+  return { fat: rel('fatMass'), muscle: rel('skeletalMuscleMass') };
+}
+
+// Pure. Weekly strength index for the given Monday keys (ascending): per lift (≥ STRENGTH_MIN_SESSIONS
+// sessions with a load) its best e1RM that week, carried forward at most STRENGTH_CARRY_WEEKS weeks,
+// relative to its value at the first week; mean of the ratios × 100.
+function weeklyStrengthIndex(sessionList, weeks){
+  if(!weeks.length) return [];
+  const perLift = {};
+  sessionList.forEach(s=> s.exercises.forEach(ex=>{
+    const v = bestE1RM(ex.sets);
+    if(!(v > 0)) return;
+    const wk = isoDate(mondayOf(s.date));
+    const lift = perLift[ex.name] || (perLift[ex.name] = { sessions: 0, byWeek: {} });
+    lift.sessions++;
+    lift.byWeek[wk] = Math.max(lift.byWeek[wk] || 0, v);
+  }));
+
+  const valueAt = (byWeek, week)=>{
+    const w = dayIndex(week);
+    let best = null;
+    Object.keys(byWeek).forEach(k=>{
+      const age = (w - dayIndex(k)) / 7;
+      if(age >= 0 && age <= STRENGTH_CARRY_WEEKS && (!best || k > best)) best = k;
+    });
+    return best ? byWeek[best] : null;
+  };
+
+  const lifts = Object.values(perLift).filter(l=> l.sessions >= STRENGTH_MIN_SESSIONS).map(l=>{
+    let base = valueAt(l.byWeek, weeks[0]);
+    if(base == null){
+      const later = Object.keys(l.byWeek).filter(k=> k > weeks[0]).sort()[0];
+      base = later ? l.byWeek[later] : null;
+    }
+    return { byWeek: l.byWeek, base };
+  }).filter(l=> l.base > 0);
+
+  return weeks.map(week=>{
+    const ratios = lifts.map(l=>{ const v = valueAt(l.byWeek, week); return v == null ? null : v / l.base; });
+    const m = meanOrNull(ratios);
+    return { week, index: m == null ? null : round1(m * 100), lifts: ratios.filter(r=> r != null).length };
+  });
+}
+
+// Monday keys from the first to the last day, including empty weeks.
+function weeksBetween(firstDay, lastDay){
+  const out = [];
+  for(let w = mondayOf(parseLocalDay(firstDay)); isoDate(w) <= lastDay; w.setDate(w.getDate() + 7)) out.push(isoDate(w));
+  return out;
+}
+
+function weeklyBodyAverages(daily){
+  if(!daily.length) return [];
+  const groups = {};
+  daily.forEach(d=>{ (groups[weekKey(d.date)] || (groups[weekKey(d.date)] = [])).push(d); });
+  return weeksBetween(daily[0].date, daily[daily.length - 1].date).map(week=>{
+    const list = groups[week] || [];
+    const avgOf = f=> meanOrNull(list.map(d=> d[f]));
+    return { week, count: list.length, weight: avgOf('weight'), bodyFatPct: avgOf('bodyFatPct'),
+      fatMass: avgOf('fatMass'), skeletalMuscleMass: avgOf('skeletalMuscleMass') };
+  });
+}
+
+function bodyReportSection(weighIns, sessionList){
+  const L = ['## Body composition', ''];
+  if(!weighIns.length){
+    L.push('_No body data._', '');
+    return L;
+  }
+  const daily = dailyFirst(weighIns);
+  const fmt = (v, d = 1)=> v == null ? '—' : String(Math.round(v * 10 ** d) / 10 ** d);
+  const describe = w=> `${w.date} ${w.time.slice(0, 5)} — ${fmt(w.weight, 2)} kg` +
+    (w.bodyFatPct != null ? `, ${fmt(w.bodyFatPct)}% fat` : '') +
+    (w.fatMass != null ? `, fat mass ${fmt(w.fatMass, 2)} kg` : '') +
+    (w.skeletalMuscleMass != null ? `, skeletal muscle ${fmt(w.skeletalMuscleMass, 2)} kg` : '');
+  const sorted = [...weighIns].sort((a, b)=> weighInKey(a) < weighInKey(b) ? -1 : 1);
+  L.push(`- First weigh-in: ${describe(sorted[0])}`);
+  L.push(`- Last weigh-in: ${describe(sorted[sorted.length - 1])}`);
+  L.push(`- Weigh-ins: ${sorted.length} on ${daily.length} days. Daily value = first weigh-in of the day (composition from the first reading of the day with valid impedance; 0 readings treated as missing).`);
+  L.push(`- Strength index = mean of each lift's best weekly e1RM relative to its value in the first week with weigh-ins (× 100). Lifts with at least ${STRENGTH_MIN_SESSIONS} loaded sessions; a lift not trained in a week carries its last value for up to ${STRENGTH_CARRY_WEEKS} weeks, then drops out.`);
+  L.push('');
+
+  const weeks = weeklyBodyAverages(daily);
+  const strength = weeklyStrengthIndex(sessionList, weeks.map(w=> w.week));
+  L.push('| Week (Mon) | Weigh-ins | Weight (kg) | Body fat % | Fat mass (kg) | Skeletal muscle (kg) | Strength index |');
+  L.push('|---|---|---|---|---|---|---|');
+  weeks.forEach((w, i)=>{
+    L.push(`| ${w.week} | ${w.count} | ${fmt(w.weight, 2)} | ${fmt(w.bodyFatPct)} | ${fmt(w.fatMass, 2)} | ${fmt(w.skeletalMuscleMass, 2)} | ${strength[i].index == null ? '—' : strength[i].index} |`);
+  });
+  L.push('');
+
+  const withData = weeks.filter(w=> w.count > 0);
+  const first = withData[0], last = withData[withData.length - 1];
+  const change = (f, unit, d)=>{
+    if(first[f] == null || last[f] == null) return '—';
+    const delta = last[f] - first[f];
+    return `${fmt(first[f], d)} → ${fmt(last[f], d)} ${unit} (${delta >= 0 ? '+' : ''}${fmt(delta, d)})`;
+  };
+  const si = strength.filter(s=> s.index != null);
+  L.push(`Change over the period (weekly averages, ${first.week} → ${last.week}):`, '');
+  L.push(`- Weight: ${change('weight', 'kg', 2)}`);
+  L.push(`- Body fat: ${change('bodyFatPct', '%', 1)}`);
+  L.push(`- Fat mass: ${change('fatMass', 'kg', 2)}`);
+  L.push(`- Skeletal muscle: ${change('skeletalMuscleMass', 'kg', 2)}`);
+  L.push(`- Strength index: ${si.length ? `${si[0].index} → ${si[si.length - 1].index}` : '—'}`);
+  L.push('');
+  return L;
+}
+
+/* ---- Inline SVG line charts (no library) ---- */
+// series: [{ points:[{x, y}], kind:'dots'|'line'|'dashed', cls }]; x and y are numbers.
+function svgLineChart(seriesList, opts = {}){
+  const W = 320, H = opts.height || 150, padL = 36, padR = 8, padT = 10, padB = 20;
+  const all = seriesList.flatMap(s=> s.points);
+  if(!all.length) return '';
+  let minX = opts.minX != null ? opts.minX : Math.min(...all.map(p=> p.x));
+  let maxX = opts.maxX != null ? opts.maxX : Math.max(...all.map(p=> p.x));
+  if(maxX <= minX) maxX = minX + 1;
+  let minY = Math.min(...all.map(p=> p.y)), maxY = Math.max(...all.map(p=> p.y));
+  if(opts.refY != null){ minY = Math.min(minY, opts.refY); maxY = Math.max(maxY, opts.refY); }
+  const minSpan = opts.minSpan || 1;
+  if(maxY - minY < minSpan){ const mid = (maxY + minY) / 2; minY = mid - minSpan / 2; maxY = mid + minSpan / 2; }
+  const pad = (maxY - minY) * 0.08; minY -= pad; maxY += pad;
+
+  const sx = x=> padL + (x - minX) / (maxX - minX) * (W - padL - padR);
+  const sy = y=> padT + (maxY - y) / (maxY - minY) * (H - padT - padB);
+  const f = n=> Math.round(n * 10) / 10;
+  const fmtY = opts.fmtY || (v=> String(round1(v)));
+  const out = [];
+
+  [minY + pad, (minY + maxY) / 2, maxY - pad].forEach(v=>{
+    out.push(`<line class="lc-grid" x1="${padL}" x2="${W - padR}" y1="${f(sy(v))}" y2="${f(sy(v))}"/>`);
+    out.push(`<text class="lc-label" x="${padL - 4}" y="${f(sy(v) + 3)}" text-anchor="end">${fmtY(v)}</text>`);
+  });
+  if(opts.refY != null) out.push(`<line class="lc-ref" x1="${padL}" x2="${W - padR}" y1="${f(sy(opts.refY))}" y2="${f(sy(opts.refY))}"/>`);
+
+  seriesList.forEach(s=>{
+    const pts = s.points.filter(p=> p.x >= minX && p.x <= maxX);
+    if(!pts.length) return;
+    if(s.kind === 'dots'){
+      pts.forEach(p=> out.push(`<circle class="${s.cls}" cx="${f(sx(p.x))}" cy="${f(sy(p.y))}" r="${s.r || 2.2}"/>`));
+    } else {
+      out.push(`<path class="${s.cls}" d="${pts.map((p, i)=> `${i ? 'L' : 'M'}${f(sx(p.x))} ${f(sy(p.y))}`).join(' ')}"/>`);
+      if(pts.length === 1 || s.markers) pts.forEach(p=> out.push(`<circle class="${s.cls} lc-marker" cx="${f(sx(p.x))}" cy="${f(sy(p.y))}" r="2.6"/>`));
+    }
+  });
+
+  if(opts.xLabel){
+    out.push(`<text class="lc-label" x="${padL}" y="${H - 5}" text-anchor="start">${opts.xLabel(minX)}</text>`);
+    out.push(`<text class="lc-label" x="${W - padR}" y="${H - 5}" text-anchor="end">${opts.xLabel(maxX)}</text>`);
+  }
+  return `<svg class="line-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label || ''}">${out.join('')}</svg>`;
+}
+
+function dayFromIndex(idx){
+  const d = new Date(idx * DAY_MS);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+function dayLabel(idx){
+  const [, m, d] = dayFromIndex(idx).split('-');
+  return `${d}/${m}`;
+}
+
+/* ---- Body view ---- */
+function bodyTileHtml(label, value, unit, change, goodWhen){
+  const val = value == null ? '—' : `${round1(value)}<span class="body-unit"> ${unit}</span>`;
+  let delta = '<span class="body-delta flat">— vs 4 wk</span>';
+  if(change){
+    const d = round1(change.delta);
+    const cls = d === 0 || !goodWhen ? 'flat' : (d < 0) === (goodWhen === 'down') ? 'good' : 'bad';
+    delta = `<span class="body-delta ${cls}">${d > 0 ? '+' : ''}${d} ${unit} vs 4 wk</span>`;
+  }
+  return `<div class="body-tile"><div class="body-tile-label">${label}</div><div class="body-tile-value">${val}</div>${delta}</div>`;
+}
+
+function renderBodyView(){
+  const wrap = document.getElementById('bodyContent');
+  if(!wrap) return;
+  if(!body.length){
+    wrap.innerHTML = `<div class="empty-state"><span class="big">No body data yet</span>Import your Renpho CSV to see body composition trends</div>`;
+    return;
+  }
+
+  const daily = dailyFirst(body);
+  const latest = daily[daily.length - 1];
+  const lastDay = dayIndex(latest.date);
+  const sinceDay = bodyRange === 'all' ? dayIndex(daily[0].date) : lastDay - BODY_RANGE_DAYS;
+  const ma = f=> movingAverage(daily, f);
+  const raw = f=> daily.filter(d=> d[f] != null).map(d=> ({ x: dayIndex(d.date), y: d[f] }));
+  const line = f=> ma(f).map(p=> ({ x: dayIndex(p.date), y: p.value }));
+  const chartOpts = (label, fmtY, minSpan)=> ({ label, minX: sinceDay, maxX: lastDay, xLabel: dayLabel, fmtY, minSpan });
+
+  const tiles = [
+    bodyTileHtml('Weight', latest.weight, 'kg', changeOver(ma('weight')), null),
+    bodyTileHtml('Fat mass', latest.fatMass, 'kg', changeOver(ma('fatMass')), 'down'),
+    bodyTileHtml('Body fat', latest.bodyFatPct, '%', changeOver(ma('bodyFatPct')), 'down'),
+    bodyTileHtml('Skeletal muscle', latest.skeletalMuscleMass, 'kg', changeOver(ma('skeletalMuscleMass')), 'up')
+  ].join('');
+
+  const trendCard = (title, f, unit, minSpan)=> `
+    <div class="chart-card">
+      <div class="chart-title">${title} — ${BODY_MA_DAYS}-day average</div>
+      ${svgLineChart([
+        { points: raw(f), kind:'dots', cls:'lc-raw' },
+        { points: line(f), kind:'line', cls:'lc-ma' }
+      ], chartOpts(title, v=> `${round1(v)}`, minSpan)) || '<div class="body-note">Not enough readings yet.</div>'}
+      <div class="lc-legend"><span class="lg lg-raw">daily (${unit})</span><span class="lg lg-ma">${BODY_MA_DAYS}-day avg</span></div>
+    </div>`;
+
+  const recomp = recompositionSeries(daily, sinceDay);
+  const toXY = list=> list.map(p=> ({ x: dayIndex(p.date), y: p.value }));
+  const recompSvg = svgLineChart([
+    { points: toXY(recomp.fat), kind:'line', cls:'lc-fat' },
+    { points: toXY(recomp.muscle), kind:'line', cls:'lc-muscle' }
+  ], { ...chartOpts('Recomposition', v=> `${v > 0 ? '+' : ''}${round1(v)}`, 1), refY: 0 });
+
+  const firstWeek = weekKey(dayFromIndex(Math.max(sinceDay, dayIndex(daily[0].date))));
+  const weeks = weeksBetween(firstWeek, latest.date);
+  const strength = weeklyStrengthIndex(sessions, weeks).filter(s=> s.index != null);
+  const strengthSvg = svgLineChart([
+    { points: strength.map(s=> ({ x: dayIndex(s.week), y: s.index })), kind:'line', cls:'lc-strength', markers: true }
+  ], { ...chartOpts('Strength index', v=> `${Math.round(v)}`, 4), refY: 100, height: 110 });
+
+  const rangeBtn = (key, text)=> `<button type="button" class="range-btn${bodyRange === key ? ' active' : ''}" data-range="${key}">${text}</button>`;
+  wrap.innerHTML = `
+    <div class="chart-card">
+      <div class="chart-title">Latest weigh-in — ${latest.date} ${latest.time.slice(0, 5)}</div>
+      <div class="body-tiles">${tiles}</div>
+    </div>
+    <div class="stats-toggle body-range">${rangeBtn('recent', `${BODY_RANGE_DAYS}d`)}${rangeBtn('all', 'All')}</div>
+    ${trendCard('Weight', 'weight', 'kg', 1)}
+    ${trendCard('Body fat', 'bodyFatPct', '%', 1)}
+    <div class="chart-card">
+      <div class="chart-title">Recomposition — change since start of range (kg, ${BODY_MA_DAYS}-day avg)</div>
+      ${recompSvg || '<div class="body-note">Not enough composition readings yet.</div>'}
+      <div class="lc-legend"><span class="lg lg-fat">fat mass</span><span class="lg lg-muscle">skeletal muscle</span></div>
+      <div class="chart-title body-subtitle">Strength index — weekly, first week = 100</div>
+      ${strengthSvg || '<div class="body-note">Needs lifts with at least 3 loaded sessions.</div>'}
+    </div>`;
+
+  wrap.querySelectorAll('.range-btn').forEach(btn=> btn.addEventListener('click', ()=>{
+    bodyRange = btn.dataset.range;
+    renderBodyView();
+  }));
+}
+
+function setProgressSection(section){
+  progressSection = section;
+  try{ localStorage.setItem(PROGRESS_SECTION_KEY, section); }catch(e){}
+  document.querySelectorAll('.section-btn').forEach(b=> b.classList.toggle('active', b.dataset.section === section));
+  document.getElementById('liftsSection').style.display = section === 'lifts' ? '' : 'none';
+  document.getElementById('bodySection').style.display = section === 'body' ? '' : 'none';
+  if(section === 'body') renderBodyView();
+}
+
+async function importRenphoCsv(file){
+  if(!/\.csv$/i.test(file.name)){
+    flashMsg('bodyMsg', 'Please choose the .csv file exported from Renpho.', true);
+    return;
+  }
+  let text;
+  try{
+    text = await file.text();
+  }catch(e){
+    flashMsg('bodyMsg', 'Could not read the file. Nothing was changed.', true);
+    return;
+  }
+  const parsed = parseRenphoCsv(text);
+  if(parsed.error){
+    flashMsg('bodyMsg', `${parsed.error} Nothing was changed.`, true);
+    return;
+  }
+  const { merged, added, from, to } = mergeWeighIns(body, parsed.weighIns);
+  if(added.length){
+    const previous = body;
+    body = merged;
+    if(!persistBody()){
+      body = previous;
+      flashMsg('bodyMsg', 'Could not save the weigh-ins (storage full?). Nothing was changed.', true);
+      return;
+    }
+  }
+  showToast(renphoImportMessage(added.length, from, to, parsed.skipped));
+  renderBodyView();
 }
 
 /* ---------------- HISTORY VIEW ---------------- */
