@@ -514,7 +514,7 @@
     border-radius:var(--radius-pill);
     padding:5px;
   }
-  .stats-toggle-btn, .metric-btn{
+  .metric-btn{
     flex:1;
     background:none;
     border:none;
@@ -526,7 +526,7 @@
     border-radius:var(--radius-pill);
     cursor:pointer;
   }
-  .stats-toggle-btn.active, .metric-btn.active{
+  .metric-btn.active{
     background:var(--coral);
     color:#1A0F0C;
   }
@@ -623,17 +623,13 @@
   .lg-ma::before{ background:var(--coral); }
   .lg-fat::before{ background:var(--yellow); }
   .lg-muscle::before{ background:var(--mint); }
-  .progress-select{
-    width:100%;
-    background:var(--card);
-    border:none;
-    color:var(--text);
-    font-family:'Poppins', sans-serif;
-    font-weight:500;
-    font-size:14px;
-    padding:13px;
-    border-radius:var(--radius-sm);
-    margin-bottom:16px;
+  .other-ex-title{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--muted);
+    font-weight:700;
+    margin:22px 4px 10px;
   }
   .chart-card{
     background:var(--card);
@@ -1147,17 +1143,12 @@
     </div>
     <div id="liftsSection">
       <div class="stats-toggle">
-        <button class="stats-toggle-btn active" data-mode="exercise">By exercise</button>
-        <button class="stats-toggle-btn" data-mode="day">By workout</button>
-      </div>
-      <div class="stats-toggle">
         <button class="metric-btn" data-metric="e1rm">e1RM</button>
         <button class="metric-btn" data-metric="volume">Volume</button>
         <button class="metric-btn" data-metric="max">Max</button>
         <button class="metric-btn" data-metric="rel">Rel</button>
       </div>
-      <select class="progress-select" id="exerciseSelect"></select>
-      <div class="day-rack" id="statsDayRack" style="display:none;"></div>
+      <div class="day-rack" id="statsDayRack"></div>
       <div id="progressCharts"></div>
     </div>
     <div id="bodySection" style="display:none;">
@@ -1330,7 +1321,7 @@ let PROGRAM = loadProgram();
 let currentDay = 'A';
 let currentView = 'log';
 let editingIndex = null;
-let statsMode = 'exercise';
+let statsDay = 'A';                  // workout shown in Progress → Lifts
 let progressMetric = loadProgressMetric();
 let programDay = 'A';
 let body = [];                       // Renpho weigh-ins, sorted by date + time
@@ -1463,17 +1454,6 @@ function bindNav(){
     });
   });
 
-  document.querySelectorAll('.stats-toggle-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.stats-toggle-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      statsMode = btn.dataset.mode;
-      document.getElementById('exerciseSelect').style.display = statsMode==='exercise' ? '' : 'none';
-      document.getElementById('statsDayRack').style.display = statsMode==='day' ? 'flex' : 'none';
-      renderProgressView();
-    });
-  });
-
   document.querySelectorAll('.metric-btn').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.metric===progressMetric);
     btn.addEventListener('click', ()=>{
@@ -1494,9 +1474,6 @@ function bindNav(){
     renphoInput.value = '';  // allow re-importing the same (updated) file
     if(file) importRenphoCsv(file);
   });
-
-  // Bound once here: the select is emptied and repopulated whenever the program changes.
-  document.getElementById('exerciseSelect').addEventListener('change', renderChart);
 
   document.getElementById('exportReportBtn').addEventListener('click', exportReport);
   document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
@@ -2286,36 +2263,42 @@ function allExerciseNames(){
 }
 
 function renderProgressView(){
-  const select = document.getElementById('exerciseSelect');
-  if(select.options.length===0){
-    allExerciseNames().forEach(name=>{
-      const opt = document.createElement('option');
-      opt.value = name; opt.textContent = name;
-      select.appendChild(opt);
-    });
-  }
-
+  // Rebuilt on every render so renamed days and a replaced program (import, reset) show up.
   const dayRack = document.getElementById('statsDayRack');
-  if(dayRack.children.length===0){
-    Object.keys(PROGRAM).forEach(day=>{
-      const el = document.createElement('div');
-      el.className = 'day-plate ' + dayColorClass(day) + (day==='A' ? ' active':'');
-      el.dataset.day = day;
-      el.innerHTML = `<span class="plate-name">${PROGRAM[day].label}</span>`;
-      el.addEventListener('click', ()=>{
-        dayRack.querySelectorAll('.day-plate').forEach(p=>p.classList.remove('active'));
-        el.classList.add('active');
-        renderDayStats(day);
-      });
-      dayRack.appendChild(el);
+  if(!PROGRAM[statsDay]) statsDay = Object.keys(PROGRAM)[0];
+  dayRack.innerHTML = '';
+  Object.keys(PROGRAM).forEach(day=>{
+    const el = document.createElement('div');
+    el.className = 'day-plate ' + dayColorClass(day) + (day===statsDay ? ' active':'');
+    el.dataset.day = day;
+    el.innerHTML = `<span class="plate-name">${PROGRAM[day].label}</span>`;
+    el.addEventListener('click', ()=>{
+      statsDay = day;
+      dayRack.querySelectorAll('.day-plate').forEach(p=>p.classList.remove('active'));
+      el.classList.add('active');
+      renderDayStats(day);
     });
-  }
+    dayRack.appendChild(el);
+  });
 
   updateUndoButton();
   renderBackupReminder();
   setProgressSection(progressSection);
-  if(statsMode==='exercise') renderChart();
-  else renderDayStats(dayRack.querySelector('.day-plate.active')?.dataset.day || 'A');
+  renderDayStats(statsDay);
+}
+
+// Exercises with logged history that no program day contains any more (removed or renamed),
+// most recently logged first, so their history stays visible.
+function otherExerciseNames(program, sessionList){
+  const inProgram = new Set();
+  Object.values(program).forEach(d=> d.exercises.forEach(e=> inProgram.add(e.name)));
+  const lastLogged = new Map();
+  sessionList.forEach(s=> s.exercises.forEach(ex=>{
+    if(inProgram.has(ex.name) || !hasSetData(ex.sets)) return;
+    const t = new Date(s.date).getTime();
+    if(!lastLogged.has(ex.name) || t > lastLogged.get(ex.name)) lastLogged.set(ex.name, t);
+  }));
+  return [...lastLogged].sort((a, b)=> b[1] - a[1]).map(([name])=> name);
 }
 
 // Chart card holding only a short explanation (used by the Rel metric).
@@ -2379,30 +2362,6 @@ function buildChartCard(name){
   return card;
 }
 
-function renderChart(){
-  const select = document.getElementById('exerciseSelect');
-  const name = select.value || select.options[0]?.value;
-  const container = document.getElementById('progressCharts');
-  container.innerHTML = '';
-
-  if(!name){
-    container.innerHTML = `<div class="empty-state"><span class="big">Nothing to show yet</span>Log at least one session in the "Today" tab to see your progress here.</div>`;
-    return;
-  }
-
-  if(progressMetric === 'rel' && !body.length){
-    container.innerHTML = `<div class="empty-state"><span class="big">No body data</span>Import Renpho data to see relative strength</div>`;
-    return;
-  }
-
-  const card = buildChartCard(name);
-  if(!card){
-    container.innerHTML = `<div class="empty-state"><span class="big">No data yet</span>You haven't logged any weights for this exercise yet.</div>`;
-    return;
-  }
-  container.appendChild(card);
-}
-
 function renderDayStats(day){
   const container = document.getElementById('progressCharts');
   container.innerHTML = '';
@@ -2421,6 +2380,15 @@ function renderDayStats(day){
 
   if(!anyCard){
     container.innerHTML = `<div class="empty-state"><span class="big">No data yet</span>You haven't logged any weights for ${PROGRAM[day].label} exercises yet.</div>`;
+  }
+
+  const otherCards = otherExerciseNames(PROGRAM, sessions).map(buildChartCard).filter(Boolean);
+  if(otherCards.length){
+    const title = document.createElement('div');
+    title.className = 'other-ex-title';
+    title.textContent = 'Other exercises';
+    container.appendChild(title);
+    otherCards.forEach(card=> container.appendChild(card));
   }
 }
 
@@ -2898,8 +2866,6 @@ function refreshAfterDataChange(){
   editingIndex = null;
   if(!PROGRAM[currentDay]) currentDay = Object.keys(PROGRAM)[0];
   if(!PROGRAM[programDay]) programDay = Object.keys(PROGRAM)[0];
-  document.getElementById('exerciseSelect').innerHTML = '';
-  document.getElementById('statsDayRack').innerHTML = '';
   renderDayRack();
   renderExercises();
   renderProgressView();
@@ -3909,7 +3875,6 @@ function saveReorderedProgram(card){
   const todayState = currentDay === programDay ? captureTodayInputs() : null;
   PROGRAM[programDay].exercises = next;
   persistProgram();
-  document.getElementById('exerciseSelect').innerHTML = '';
   if(todayState){
     renderExercises();
     restoreTodayInputs(todayState);
@@ -4196,7 +4161,6 @@ function saveProgram(){
   PROGRAM[programDay].exercises = newExercises;
   persistProgram();
 
-  document.getElementById('exerciseSelect').innerHTML = '';
   if(currentDay === programDay) renderExercises();
   renderDayRack();
   renderProgramExList();
@@ -4209,7 +4173,6 @@ function saveProgram(){
 function resetProgramDay(){
   PROGRAM[programDay] = JSON.parse(JSON.stringify(DEFAULT_PROGRAM[programDay]));
   persistProgram();
-  document.getElementById('exerciseSelect').innerHTML = '';
   if(currentDay === programDay) renderExercises();
   renderDayRack();
   renderProgramExList();
