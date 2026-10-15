@@ -271,6 +271,42 @@
     font-size:12px;
     cursor:pointer;
   }
+  .backup-banner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    background:var(--card);
+    border:1.5px solid var(--stroke);
+    border-radius:var(--radius-sm);
+    padding:8px 8px 8px 14px;
+    margin-bottom:10px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--text);
+  }
+  .backup-banner-actions{ display:flex; gap:6px; margin-left:auto; }
+  .backup-now-btn, .backup-later-btn{
+    border:none;
+    border-radius:var(--radius-pill);
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:11.5px;
+    min-height:34px;
+    padding:7px 13px;
+    cursor:pointer;
+  }
+  .backup-now-btn{ background:var(--mint); color:#08211A; }
+  .backup-later-btn{ background:transparent; color:var(--muted); }
+  .backup-line{
+    font-size:11px;
+    font-weight:600;
+    color:var(--muted);
+    text-align:center;
+    margin:6px 0 2px;
+  }
+  .backup-line.overdue{ color:var(--warn); }
   .stall-banner{
     display:flex;
     align-items:center;
@@ -1081,6 +1117,13 @@
       <span id="editBannerText"></span>
       <button id="editCancelBtn">Cancel</button>
     </div>
+    <div id="backupBanner" class="backup-banner" role="status" style="display:none;">
+      <span id="backupBannerText" class="backup-banner-text"></span>
+      <span class="backup-banner-actions">
+        <button type="button" class="backup-now-btn" id="backupNowBtn">Back up now</button>
+        <button type="button" class="backup-later-btn" id="backupLaterBtn">Later</button>
+      </span>
+    </div>
     <div id="stallBanner" class="stall-banner" role="status" style="display:none;">
       <span>Most lifts have stalled — consider a deload week</span>
       <button type="button" class="stall-banner-close" id="stallBannerClose" aria-label="Dismiss until next workout">✕</button>
@@ -1128,6 +1171,7 @@
     </div>
     <button class="export-btn" id="exportReportBtn">Export report</button>
     <button class="export-btn" id="exportBackupBtn">Export backup</button>
+    <div class="backup-line" id="backupLine"></div>
     <button class="export-btn" id="importBackupBtn">Import backup</button>
     <button class="export-btn" id="undoImportBtn" style="display:none;">Undo last import</button>
     <input type="file" id="importBackupInput" accept=".json,application/json" style="display:none;">
@@ -1259,7 +1303,14 @@ const RECOMP_MIN_WEIGH_IN_DAYS = 10;    // days with a weigh-in needed in that w
 const RECOMP_FAT_THRESHOLD = 0.3;       // kg of fat mass
 const RECOMP_MUSCLE_THRESHOLD = 0.3;    // kg of skeletal muscle
 const RECOMP_STRENGTH_THRESHOLD = 2;    // strength-index points
-const REL_BW_TOLERANCE_DAYS = 3;        // relative strength: nearest weigh-in allowed when no 7-day average
+const REL_BW_TOLERANCE_DAYS = 3;
+
+// Backup reminder (these keys are device-local: never exported in a backup, never overwritten by an import).
+const LAST_BACKUP_KEY = 'rack-last-backup';
+const LAST_CHANGE_KEY = 'rack-last-change';
+const BACKUP_SNOOZE_KEY = 'rack-backup-snooze';
+const BACKUP_REMINDER_DAYS = 7;         // remind when the last backup is older than this and data changed since
+const BACKUP_SNOOZE_HOURS = 24;         // "Later"        // relative strength: nearest weigh-in allowed when no 7-day average
 
 // Chart metrics; bodyweight exercises (no load ever logged) fall back to rep counts.
 const METRICS = {
@@ -1321,6 +1372,7 @@ function loadProgram(){
 function persistProgram(){
   try{
     localStorage.setItem(PROGRAM_KEY, JSON.stringify(PROGRAM));
+    markDataChanged();
   }catch(e){
     console.error('Program storage error', e);
   }
@@ -1337,6 +1389,9 @@ async function init(){
   document.getElementById('saveBtn').addEventListener('click', saveSession);
   document.getElementById('editCancelBtn').addEventListener('click', cancelEdit);
   document.getElementById('stallBannerClose').addEventListener('click', dismissStallBanner);
+  // Directly from the tap, so the phone's share sheet is allowed to open.
+  document.getElementById('backupNowBtn').addEventListener('click', exportBackup);
+  document.getElementById('backupLaterBtn').addEventListener('click', snoozeBackupReminder);
   document.getElementById('noteToggleBtn').addEventListener('click', ()=>{
     document.getElementById('noteFieldWrap').style.display = 'block';
     document.getElementById('noteToggleBtn').style.display = 'none';
@@ -1351,7 +1406,7 @@ async function loadSessions(){
   }catch(e){
     sessions = [];
   }
-  if(recomputePRs()) await persistSessions();
+  if(recomputePRs()) await persistSessions({ markChange: false });
   loadBody();
 }
 
@@ -1368,6 +1423,7 @@ function loadBody(){
 function persistBody(){
   try{
     localStorage.setItem(BODY_KEY, JSON.stringify(body));
+    markDataChanged();
     return true;
   }catch(e){
     console.error('Body storage error', e);
@@ -1375,12 +1431,19 @@ function persistBody(){
   }
 }
 
-async function persistSessions(){
+// markChange:false only for the load-time PR recompute, which is not a user change.
+async function persistSessions({ markChange = true } = {}){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    if(markChange) markDataChanged();
   }catch(e){
     console.error('Storage error', e);
   }
+}
+
+// Time of the last change to sessions, program or body data (drives the backup reminder).
+function markDataChanged(){
+  try{ localStorage.setItem(LAST_CHANGE_KEY, new Date().toISOString()); }catch(e){}
 }
 
 /* ---------------- NAV ---------------- */
@@ -2106,6 +2169,7 @@ function renderExercises(){
     }
   });
 
+  renderBackupReminder();
   renderStallBanner();
 
   const noteVal = editingSession && editingSession.note ? editingSession.note : '';
@@ -2248,6 +2312,7 @@ function renderProgressView(){
   }
 
   updateUndoButton();
+  renderBackupReminder();
   setProgressSection(progressSection);
   if(statsMode==='exercise') renderChart();
   else renderDayStats(dayRack.querySelector('.day-plate.active')?.dataset.day || 'A');
@@ -2553,6 +2618,7 @@ function flashExportMsg(text, isError){
 }
 
 // Mobile/PWA: share sheet ("Save to Files", AirDrop, apps); desktop: Blob download.
+// Returns 'shared' | 'cancelled' | 'downloaded'.
 // `types` are tried in order because some platforms reject e.g. text/markdown but accept text/plain.
 async function shareOrDownload(content, filename, types){
   if(navigator.canShare){
@@ -2561,9 +2627,9 @@ async function shareOrDownload(content, filename, types){
       if(!navigator.canShare({ files:[file] })) continue;
       try{
         await navigator.share({ files:[file], title: filename });
-        return;
+        return 'shared';
       }catch(e){
-        if(e.name === 'AbortError') return;
+        if(e.name === 'AbortError') return 'cancelled';
         break;
       }
     }
@@ -2578,6 +2644,7 @@ async function shareOrDownload(content, filename, types){
   a.remove();
   setTimeout(()=> URL.revokeObjectURL(url), 1000);
   flashExportMsg(`✓ ${filename} downloaded`);
+  return 'downloaded';
 }
 
 async function exportReport(){
@@ -2607,7 +2674,74 @@ function buildBackup(){
 
 async function exportBackup(){
   const json = JSON.stringify(buildBackup(), null, 2);
-  await shareOrDownload(json, `rack-backup-${isoDate(new Date())}.json`, ['application/json', 'text/plain']);
+  const outcome = await shareOrDownload(json, `rack-backup-${isoDate(new Date())}.json`, ['application/json', 'text/plain']);
+  // Only a completed share or a download counts; a cancelled share sheet leaves the date as it was.
+  if(outcome === 'shared' || outcome === 'downloaded'){
+    try{ localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); }catch(e){}
+    showToast('Backup saved');
+    renderBackupReminder();
+  }
+  return outcome;
+}
+
+/* ---- Backup reminder ---- */
+function readStoredDate(key){
+  try{
+    const v = localStorage.getItem(key);
+    return v && !isNaN(Date.parse(v)) ? v : null;
+  }catch(e){
+    return null;
+  }
+}
+
+function backupAgoText(days){
+  return days <= 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;
+}
+
+// Pure. Calendar days since the last backup; the banner shows when there is no backup yet (and some
+// session exists), or the backup is older than BACKUP_REMINDER_DAYS with changes after it, unless snoozed.
+function backupReminderState({ lastBackup, lastChange, snoozedUntil, hasSessions, now = new Date() }){
+  const daysAgo = lastBackup ? dayIndex(isoDate(now)) - dayIndex(isoDate(lastBackup)) : null;
+  const changedSince = !!lastChange && !!lastBackup && new Date(lastChange) > new Date(lastBackup);
+  const due = lastBackup ? daysAgo > BACKUP_REMINDER_DAYS && changedSince : hasSessions;
+  const snoozed = !!snoozedUntil && new Date(snoozedUntil) > now;
+  return {
+    show: due && !snoozed,
+    daysAgo,
+    overdue: lastBackup ? daysAgo > BACKUP_REMINDER_DAYS : hasSessions,
+    banner: lastBackup ? `Last backup ${backupAgoText(daysAgo)}` : 'No backup yet',
+    line: `Last backup: ${lastBackup ? backupAgoText(daysAgo) : 'never'}`
+  };
+}
+
+function currentBackupState(){
+  return backupReminderState({
+    lastBackup: readStoredDate(LAST_BACKUP_KEY),
+    lastChange: readStoredDate(LAST_CHANGE_KEY),
+    snoozedUntil: readStoredDate(BACKUP_SNOOZE_KEY),
+    hasSessions: sessions.length > 0
+  });
+}
+
+// Today banner (not while editing a past session) and the line under Export backup in Progress.
+function renderBackupReminder(){
+  const state = currentBackupState();
+  const banner = document.getElementById('backupBanner');
+  if(banner){
+    document.getElementById('backupBannerText').textContent = state.banner;
+    banner.style.display = state.show && editingIndex === null ? 'flex' : 'none';
+  }
+  const line = document.getElementById('backupLine');
+  if(line){
+    line.textContent = state.line;
+    line.classList.toggle('overdue', state.overdue);
+  }
+}
+
+function snoozeBackupReminder(){
+  const until = new Date(Date.now() + BACKUP_SNOOZE_HOURS * 3600 * 1000).toISOString();
+  try{ localStorage.setItem(BACKUP_SNOOZE_KEY, until); }catch(e){}
+  renderBackupReminder();
 }
 
 function isPlainObject(v){
