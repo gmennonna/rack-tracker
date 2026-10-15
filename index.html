@@ -524,6 +524,14 @@
   }
   .section-btn.active{ background:var(--text); color:var(--bg); }
   .body-import-btn{ margin:0 0 6px; }
+  .recomp-verdict{ font-size:17px; font-weight:700; margin-bottom:4px; }
+  .recomp-verdict.tone-good{ color:var(--mint); }
+  .recomp-verdict.tone-bad{ color:var(--warn); }
+  .recomp-verdict.tone-warn{ color:var(--yellow); }
+  .recomp-verdict.tone-neutral{ color:var(--text); }
+  .recomp-deltas{ font-size:12.5px; font-weight:600; color:var(--text); margin-bottom:4px; }
+  .recomp-advice{ font-size:12px; color:var(--muted); line-height:1.5; }
+  .recomp-note{ font-size:10px; color:var(--muted); opacity:.75; margin-top:8px; }
   .body-range{ margin-bottom:14px; }
   .range-btn{
     flex:1;
@@ -1103,12 +1111,14 @@
         <button class="metric-btn" data-metric="e1rm">e1RM</button>
         <button class="metric-btn" data-metric="volume">Volume</button>
         <button class="metric-btn" data-metric="max">Max</button>
+        <button class="metric-btn" data-metric="rel">Rel</button>
       </div>
       <select class="progress-select" id="exerciseSelect"></select>
       <div class="day-rack" id="statsDayRack" style="display:none;"></div>
       <div id="progressCharts"></div>
     </div>
     <div id="bodySection" style="display:none;">
+      <div id="recompCard"></div>
       <button class="export-btn body-import-btn" id="importRenphoBtn">Import Renpho CSV</button>
       <!-- No accept filter: Android/Drive often label CSVs as text/plain or application/vnd.ms-excel and grey them out;
            the content is validated by its Renpho headers instead. -->
@@ -1243,6 +1253,14 @@ const BODY_RANGE_DAYS = 90;             // default chart range ("90d")
 const STRENGTH_MIN_SESSIONS = 3;        // lifts needed in the strength index
 const STRENGTH_CARRY_WEEKS = 4;         // weeks a lift's last e1RM is carried forward before it drops out
 
+// Recomposition verdict (impedance scales are noisy: changes under a threshold count as "stable").
+const RECOMP_WINDOW_DAYS = 28;          // compare today with 4 weeks ago
+const RECOMP_MIN_WEIGH_IN_DAYS = 10;    // days with a weigh-in needed in that window
+const RECOMP_FAT_THRESHOLD = 0.3;       // kg of fat mass
+const RECOMP_MUSCLE_THRESHOLD = 0.3;    // kg of skeletal muscle
+const RECOMP_STRENGTH_THRESHOLD = 2;    // strength-index points
+const REL_BW_TOLERANCE_DAYS = 3;        // relative strength: nearest weigh-in allowed when no 7-day average
+
 // Chart metrics; bodyweight exercises (no load ever logged) fall back to rep counts.
 const METRICS = {
   e1rm:   { title:'estimated 1RM per session', value: sets=> roundHalf(bestE1RM(sets)),
@@ -1250,7 +1268,11 @@ const METRICS = {
   volume: { title:'total volume per session',  value: sets=> Math.round(totalVolume(sets)),
             bwTitle:'total reps per session',   bwValue: totalReps },
   max:    { title:'max load per session',      value: maxWeight,
-            bwTitle:'max reps per session',     bwValue: maxReps }
+            bwTitle:'max reps per session',     bwValue: maxReps },
+  // value(sets, session): best e1RM / body weight on the session's date; bodyweight lifts have no value.
+  rel:    { title:'relative strength per session (× BW)',
+            value: (sets, session)=>{ const r = relativeStrength(sets, session.date, bodyDaily()); return r == null ? 0 : Math.round(r * 100) / 100; },
+            bwTitle:'relative strength', bwValue: ()=> 0 }
 };
 let sessions = [];
 let PROGRAM = loadProgram();
@@ -2231,19 +2253,33 @@ function renderProgressView(){
   else renderDayStats(dayRack.querySelector('.day-plate.active')?.dataset.day || 'A');
 }
 
+// Chart card holding only a short explanation (used by the Rel metric).
+function messageChartCard(name, text){
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+  card.innerHTML = `<div class="chart-title">${name}</div><div class="body-note">${text}</div>`;
+  return card;
+}
+
 function buildChartCard(name){
   const bw = isBodyweight(name);
   const metric = METRICS[progressMetric];
+  const isRel = progressMetric === 'rel';
   const valueOf = bw ? metric.bwValue : metric.value;
   const unit = bw ? 'reps' : 'kg';
 
-  const points = sessions
+  const logged = sessions
     .map(s=> ({ date: s.date, ex: s.exercises.find(e=>e.name===name) }))
-    .filter(p=> p.ex)
-    .map(p=> ({ date: p.date, weight: valueOf(p.ex.sets) }))
+    .filter(p=> p.ex);
+  const points = logged
+    .map(p=> ({ date: p.date, weight: valueOf(p.ex.sets, p) }))
     .filter(p=> p.weight > 0)
     .sort((a,b)=> new Date(a.date)-new Date(b.date));
 
+  if(isRel && points.length === 0){
+    if(bw) return messageChartCard(name, "Relative strength isn't available for bodyweight exercises");
+    if(logged.some(p=> bestE1RM(p.ex.sets) > 0)) return messageChartCard(name, 'No sessions with a body weight reading nearby');
+  }
   if(points.length===0) return null;
 
   const maxW = Math.max(...points.map(p=>p.weight), 1);
@@ -2257,7 +2293,7 @@ function buildChartCard(name){
     const d = new Date(p.date).toLocaleDateString('en-US',{day:'numeric',month:'numeric'});
     bars += `
       <div class="bar-col">
-        <div class="bar-val">${p.weight}</div>
+        <div class="bar-val">${isRel ? `${p.weight.toFixed(2)}×` : p.weight}</div>
         <div class="bar" style="height:${h}%"></div>
         <div class="bar-label">${d}</div>
       </div>`;
@@ -2265,8 +2301,9 @@ function buildChartCard(name){
 
   const first = points[0].weight;
   const latest = points[points.length-1].weight;
-  const diff = round1(latest - first);
-  const diffLabel = diff > 0 ? `+${diff} ${unit} since first log` : diff < 0 ? `${diff} ${unit} since first log` : 'unchanged since first log';
+  const diff = isRel ? Math.round((latest - first) * 100) / 100 : round1(latest - first);
+  const diffText = isRel ? `${Math.abs(diff).toFixed(2)}× BW` : `${Math.abs(diff)} ${unit}`;   // "+0.08× BW", "+5 kg"
+  const diffLabel = diff > 0 ? `+${diffText} since first log` : diff < 0 ? `-${diffText} since first log` : 'unchanged since first log';
   const diffClass = diff > 0 ? 'delta-up' : diff < 0 ? 'delta-down' : 'delta-flat';
 
   card.innerHTML = `
@@ -2288,6 +2325,11 @@ function renderChart(){
     return;
   }
 
+  if(progressMetric === 'rel' && !body.length){
+    container.innerHTML = `<div class="empty-state"><span class="big">No body data</span>Import Renpho data to see relative strength</div>`;
+    return;
+  }
+
   const card = buildChartCard(name);
   if(!card){
     container.innerHTML = `<div class="empty-state"><span class="big">No data yet</span>You haven't logged any weights for this exercise yet.</div>`;
@@ -2299,6 +2341,11 @@ function renderChart(){
 function renderDayStats(day){
   const container = document.getElementById('progressCharts');
   container.innerHTML = '';
+
+  if(progressMetric === 'rel' && !body.length){
+    container.innerHTML = `<div class="empty-state"><span class="big">No body data</span>Import Renpho data to see relative strength</div>`;
+    return;
+  }
 
   const exNames = PROGRAM[day].exercises.map(e=>e.name);
   let anyCard = false;
@@ -2393,6 +2440,7 @@ function buildReportMarkdown(){
   L.push('- **Max** = heaviest weight lifted in a session (sets logged without reps included).');
   L.push('- Sets with empty weight or reps are ignored for e1RM and volume.');
   L.push('- **Bodyweight exercises** (no load ever logged) are measured in reps: e1RM → max reps in a set, volume → total reps. Marked "BW".');
+  L.push(`- **Rel. strength** = best e1RM / body weight on the session date (7-day average weight, else the nearest weigh-in within ${REL_BW_TOLERANCE_DAYS} days); loaded lifts only.`);
   L.push(`- **Status**: over the last ${STALL_WINDOW_DAYS} days (restarted after a pause of more than ${STALL_PAUSE_DAYS} days), with at least ${STALL_MIN_SESSIONS} sessions and earlier history. "Stalled N wk" = the best e1RM (max reps for BW) in that window is less than ${STALL_MIN_GAIN * 100}% above the earlier best, N weeks since that best. "Regressing" = the last 3 sessions dropped in a row and the latest is more than ${REGRESSION_DROP * 100}% under the window's best. "Alert paused" = the user changed something; re-evaluated after ${STALL_MIN_SESSIONS} new sessions. "—" = not enough data.`);
   L.push('- A **PR** is a session whose e1RM (max reps for bodyweight) beats every earlier session of that exercise; the first log of an exercise counts as a PR.');
   L.push('- Set notation in the log: `weight×reps`; `BW` = bodyweight, `?` = reps not logged, `—` = weight not logged.');
@@ -2400,8 +2448,9 @@ function buildReportMarkdown(){
 
   // ---- Per-exercise summary
   L.push('## Exercise summary', '');
-  L.push('| Exercise | Unit | Status | Sessions | First | Last | e1RM start → now → best | Δ e1RM start→now | Max start → now | Avg volume first 3 | Avg volume last 3 |');
-  L.push('|---|---|---|---|---|---|---|---|---|---|---|');
+  L.push('| Exercise | Unit | Status | Sessions | First | Last | e1RM start → now → best | Δ e1RM start→now | Max start → now | Avg volume first 3 | Avg volume last 3 | Rel. strength (first → current) |');
+  L.push('|---|---|---|---|---|---|---|---|---|---|---|---|');
+  const daily = dailyFirst(body);
   names.forEach(name=>{
     const bw = bwByName[name];
     const logs = sorted
@@ -2423,8 +2472,10 @@ function buildReportMarkdown(){
     const maxCell = bw ? 'n/a (BW)' : maxes.length ? `${fmtNum(maxes[0])} → ${fmtNum(maxes[maxes.length-1])}` : '—';
     const volFirst = volumes.length ? fmtNum(avg(volumes.slice(0,3))) : '—';
     const volLast = volumes.length ? fmtNum(avg(volumes.slice(-3))) : '—';
+    const rels = bw ? [] : logs.map(p=> relativeStrength(p.ex.sets, p.date, daily)).filter(v=> v != null);
+    const relCell = rels.length ? `${rels[0].toFixed(2)} → ${rels[rels.length - 1].toFixed(2)}× BW` : '—';
 
-    L.push(`| ${mdCell(name)} | ${bw ? 'BW reps' : 'kg'} | ${stallStatusLabel(stallFor(name))} | ${logs.length} | ${isoDate(logs[0].date)} | ${isoDate(logs[logs.length-1].date)} | ${e1rmCell} | ${deltaCell} | ${maxCell} | ${volFirst} | ${volLast} |`);
+    L.push(`| ${mdCell(name)} | ${bw ? 'BW reps' : 'kg'} | ${stallStatusLabel(stallFor(name))} | ${logs.length} | ${isoDate(logs[0].date)} | ${isoDate(logs[logs.length-1].date)} | ${e1rmCell} | ${deltaCell} | ${maxCell} | ${volFirst} | ${volLast} | ${relCell} |`);
   });
   L.push('');
 
@@ -2921,25 +2972,158 @@ function meanOrNull(values){
   return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : null;
 }
 
-// Trailing average over the last `days` calendar days (gaps do not stretch the window);
-// a point needs BODY_MA_MIN_POINTS daily values in its window.
-function movingAverage(daily, field, days = BODY_MA_DAYS){
-  const pts = daily.filter(d=> d[field] != null).map(d=> ({ date: d.date, day: dayIndex(d.date), value: d[field] }));
-  const out = [];
-  pts.forEach(p=>{
-    const win = pts.filter(q=> q.day <= p.day && q.day > p.day - days);
-    if(win.length >= BODY_MA_MIN_POINTS) out.push({ date: p.date, value: meanOrNull(win.map(q=> q.value)) });
+// Trailing average at a given day index over the last `days` calendar days (gaps do not stretch
+// the window); null with fewer than BODY_MA_MIN_POINTS daily values in it.
+function averageAt(daily, field, day, days = BODY_MA_DAYS){
+  const win = daily.filter(d=>{
+    if(d[field] == null) return false;
+    const k = dayIndex(d.date);
+    return k <= day && k > day - days;
   });
+  return win.length >= BODY_MA_MIN_POINTS ? meanOrNull(win.map(d=> d[field])) : null;
+}
+
+// The moving average on each day that has a reading.
+function movingAverage(daily, field, days = BODY_MA_DAYS){
+  return daily
+    .filter(d=> d[field] != null)
+    .map(d=> ({ date: d.date, value: averageAt(daily, field, dayIndex(d.date), days) }))
+    .filter(p=> p.value != null);
+}
+
+// Latest moving-average value (up to anchorDay, if given) vs the one `days` earlier
+// (or the closest before it, within tolerance).
+function changeOver(ma, days = BODY_CHANGE_DAYS, anchorDay){
+  const pts = anchorDay == null ? ma : ma.filter(p=> dayIndex(p.date) <= anchorDay);
+  if(!pts.length) return null;
+  const last = pts[pts.length - 1];
+  const target = dayIndex(last.date) - days;
+  const ref = [...pts].reverse().find(p=> dayIndex(p.date) <= target && dayIndex(p.date) >= target - BODY_CHANGE_TOLERANCE_DAYS);
+  return ref ? { from: ref.value, to: last.value, delta: last.value - ref.value, fromDate: ref.date, toDate: last.date } : null;
+}
+
+/* ---- Recomposition verdict ---- */
+const RECOMP_VERDICTS = {
+  onTrack:      { verdict:'Recomposition on track',         tone:'good',    advice:'Keep the current plan.' },
+  losingMuscle: { verdict:'Losing muscle too',              tone:'bad',     advice:'Check calories and protein; consider a smaller deficit.' },
+  watch:        { verdict:'Watch for muscle loss',          tone:'warn',    advice:'Keep protein high and lifting heavy; recheck next week.' },
+  building:     { verdict:'Building at stable fat',         tone:'good',    advice:'Strength or muscle rising without fat gain.' },
+  gaining:      { verdict:'Gaining phase',                  tone:'neutral', advice:'Weight and strength rising; watch fat gain rate.' },
+  fatGain:      { verdict:'Fat gain without strength gain', tone:'warn',    advice:'Check the calorie surplus and training progression.' },
+  stable:       { verdict:'Stable',                         tone:'neutral', advice:'No clear change — fine for maintenance.' },
+  mixed:        { verdict:'Mixed signals',                  tone:'neutral', advice:'Signals disagree — keep going and recheck in 1–2 weeks.' }
+};
+const RECOMP_INSUFFICIENT = { status:'insufficient', verdict:'Not enough data yet', tone:'neutral', message:'Need ~4 weeks of weigh-ins and workouts' };
+
+// |Δ| below the threshold is "stable"; at or above it, up/down.
+function trendOf(delta, threshold){
+  return delta >= threshold ? 'up' : delta <= -threshold ? 'down' : 'stable';
+}
+
+// Verdict key from the three trends, checked in priority order.
+function classifyRecomp(fat, muscle, strength){
+  const notDown = t=> t !== 'down';
+  if(fat === 'down' && notDown(muscle) && notDown(strength)) return 'onTrack';
+  if(fat === 'down' && muscle === 'down' && strength === 'down') return 'losingMuscle';
+  if(fat === 'down') return 'watch';   // muscle or strength down
+  if(fat === 'stable' && (muscle === 'up' || strength === 'up') && notDown(muscle) && notDown(strength)) return 'building';
+  if(fat === 'up' && strength === 'up') return 'gaining';
+  if(fat === 'up') return 'fatGain';
+  if(fat === 'stable' && muscle === 'stable' && strength === 'stable') return 'stable';
+  return 'mixed';
+}
+
+// Pure. Last RECOMP_WINDOW_DAYS up to `now`: fat and skeletal muscle on the 7-day average (today vs
+// 4 weeks ago), strength index this week vs 4 weeks before. Data after `now` is ignored.
+function recompVerdict(bodyList, sessionList, now = new Date()){
+  const nowDay = dayIndex(isoDate(now));
+  const daily = dailyFirst(bodyList).filter(d=> dayIndex(d.date) <= nowDay);
+  const recentDays = daily.filter(d=> dayIndex(d.date) > nowDay - RECOMP_WINDOW_DAYS).length;
+  if(recentDays < RECOMP_MIN_WEIGH_IN_DAYS) return RECOMP_INSUFFICIENT;
+
+  // "Today" must be a moving-average point close to now, not an old one.
+  const change = field=>{
+    const c = changeOver(movingAverage(daily, field), RECOMP_WINDOW_DAYS, nowDay);
+    return c && nowDay - dayIndex(c.toDate) <= BODY_CHANGE_TOLERANCE_DAYS ? c : null;
+  };
+  const fat = change('fatMass'), muscle = change('skeletalMuscleMass');
+  if(!fat || !muscle) return RECOMP_INSUFFICIENT;
+
+  const thisWeek = weekKey(isoDate(now));
+  const weeks = weeksBetween(dayFromIndex(dayIndex(thisWeek) - RECOMP_WINDOW_DAYS), thisWeek);
+  const pastSessions = sessionList.filter(s=> dayIndex(isoDate(new Date(s.date))) <= nowDay);
+  const si = weeklyStrengthIndex(pastSessions, weeks);
+  if(!si.length || si[0].index == null || si[si.length - 1].index == null) return RECOMP_INSUFFICIENT;
+
+  const r2 = v=> Math.round(v * 100) / 100;   // avoid 0.29999 vs 0.3 noise
+  const fatD = r2(fat.delta), muscleD = r2(muscle.delta), strengthD = round1(si[si.length - 1].index - si[0].index);
+  const trends = {
+    fat: trendOf(fatD, RECOMP_FAT_THRESHOLD),
+    muscle: trendOf(muscleD, RECOMP_MUSCLE_THRESHOLD),
+    strength: trendOf(strengthD, RECOMP_STRENGTH_THRESHOLD)
+  };
+  const key = classifyRecomp(trends.fat, trends.muscle, trends.strength);
+  return {
+    status: 'ok', key, ...RECOMP_VERDICTS[key],
+    fat: { delta: fatD, trend: trends.fat },
+    muscle: { delta: muscleD, trend: trends.muscle },
+    strength: { delta: strengthD, trend: trends.strength }
+  };
+}
+
+function signedNum(v, digits = 1){
+  const r = Math.round(v * 10 ** digits) / 10 ** digits;
+  return r > 0 ? `+${r}` : r < 0 ? `−${Math.abs(r)}` : '0';
+}
+
+function recompDeltaLine(v){
+  return `Fat ${signedNum(v.fat.delta)} kg · Muscle ${signedNum(v.muscle.delta)} kg · Strength ${signedNum(v.strength.delta)}`;
+}
+
+// Verdicts for consecutive 4-week blocks, anchored on the latest weigh-in and counted backwards.
+function recompBlocks(bodyList, sessionList){
+  const daily = dailyFirst(bodyList);
+  if(!daily.length) return [];
+  const firstDay = dayIndex(daily[0].date);
+  const out = [];
+  for(let end = dayIndex(daily[daily.length - 1].date); end - RECOMP_WINDOW_DAYS >= firstDay; end -= RECOMP_WINDOW_DAYS){
+    out.unshift({
+      start: dayFromIndex(end - RECOMP_WINDOW_DAYS),
+      end: dayFromIndex(end),
+      result: recompVerdict(bodyList, sessionList, parseLocalDay(dayFromIndex(end)))
+    });
+  }
   return out;
 }
 
-// Latest moving-average value vs the one `days` earlier (or the closest before it, within tolerance).
-function changeOver(ma, days = BODY_CHANGE_DAYS){
-  if(!ma.length) return null;
-  const last = ma[ma.length - 1];
-  const target = dayIndex(last.date) - days;
-  const ref = [...ma].reverse().find(p=> dayIndex(p.date) <= target && dayIndex(p.date) >= target - BODY_CHANGE_TOLERANCE_DAYS);
-  return ref ? { from: ref.value, to: last.value, delta: last.value - ref.value, fromDate: ref.date } : null;
+/* ---- Relative strength ---- */
+// Body weight on a day: 7-day average, else the nearest weigh-in within REL_BW_TOLERANCE_DAYS, else null.
+function bodyWeightAt(daily, day){
+  const avgW = averageAt(daily, 'weight', day);
+  if(avgW != null) return avgW;
+  let best = null;
+  daily.forEach(d=>{
+    const dist = Math.abs(dayIndex(d.date) - day);
+    if(dist <= REL_BW_TOLERANCE_DAYS && (!best || dist < best.dist)) best = { dist, weight: d.weight };
+  });
+  return best ? best.weight : null;
+}
+
+// Best e1RM / body weight for a loaded session; null for bodyweight sets or without a body weight.
+function relativeStrength(sets, sessionDate, daily){
+  const e = bestE1RM(sets);
+  if(!(e > 0)) return null;
+  const bw = bodyWeightAt(daily, dayIndex(isoDate(new Date(sessionDate))));
+  return bw > 0 ? e / bw : null;
+}
+
+// dailyFirst(body), recomputed only when the body array is replaced (import, backup restore).
+function bodyDaily(){
+  if(bodyDaily.source !== body){
+    bodyDaily.source = body;
+    bodyDaily.value = dailyFirst(body);
+  }
+  return bodyDaily.value;
 }
 
 // Fat mass and skeletal muscle as kg change from the first moving-average value in the range,
@@ -3012,7 +3196,7 @@ function weeklyBodyAverages(daily){
   });
 }
 
-function bodyReportSection(weighIns, sessionList){
+function bodyReportSection(weighIns, sessionList, now = new Date()){
   const L = ['## Body composition', ''];
   if(!weighIns.length){
     L.push('_No body data._', '');
@@ -3055,6 +3239,23 @@ function bodyReportSection(weighIns, sessionList){
   L.push(`- Skeletal muscle: ${change('skeletalMuscleMass', 'kg', 2)}`);
   L.push(`- Strength index: ${si.length ? `${si[0].index} → ${si[si.length - 1].index}` : '—'}`);
   L.push('');
+
+  // Recomposition verdict: now, then per 4-week block (anchored on the latest weigh-in).
+  const verdictText = v=> v.status === 'ok' ? v.verdict : `Insufficient data (${v.message})`;
+  const current = recompVerdict(weighIns, sessionList, now);
+  L.push(`Recomposition verdict (last ${RECOMP_WINDOW_DAYS} days to ${isoDate(now)}, 7-day averages; changes under ${RECOMP_FAT_THRESHOLD} kg fat / ${RECOMP_MUSCLE_THRESHOLD} kg muscle / ${RECOMP_STRENGTH_THRESHOLD} strength-index points count as stable):`, '');
+  L.push(`- **${verdictText(current)}**${current.status === 'ok' ? ` — ${recompDeltaLine(current)}. ${current.advice}` : ''}`);
+  L.push('');
+  const blocks = recompBlocks(weighIns, sessionList);
+  if(blocks.length){
+    L.push('| Block (4 weeks) | Fat Δ (kg) | Muscle Δ (kg) | Strength Δ (pts) | Verdict |');
+    L.push('|---|---|---|---|---|');
+    blocks.forEach(b=>{
+      const r = b.result, ok = r.status === 'ok';
+      L.push(`| ${b.start} → ${b.end} | ${ok ? signedNum(r.fat.delta) : '—'} | ${ok ? signedNum(r.muscle.delta) : '—'} | ${ok ? signedNum(r.strength.delta) : '—'} | ${verdictText(r)} |`);
+    });
+    L.push('');
+  }
   return L;
 }
 
@@ -3125,9 +3326,23 @@ function bodyTileHtml(label, value, unit, change, goodWhen){
   return `<div class="body-tile"><div class="body-tile-label">${label}</div><div class="body-tile-value">${val}</div>${delta}</div>`;
 }
 
+function recompCardHtml(v){
+  const deltas = v.status === 'ok' ? `<div class="recomp-deltas">${recompDeltaLine(v)}</div>` : '';
+  return `
+    <div class="chart-card recomp-card">
+      <div class="chart-title">Recomposition — last 4 weeks</div>
+      <div class="recomp-verdict tone-${v.tone}">${v.verdict}</div>
+      ${deltas}
+      <div class="recomp-advice">${v.status === 'ok' ? v.advice : v.message}</div>
+      <div class="recomp-note">Based on 7-day averages over the last 4 weeks</div>
+    </div>`;
+}
+
 function renderBodyView(){
   const wrap = document.getElementById('bodyContent');
   if(!wrap) return;
+  const card = document.getElementById('recompCard');
+  if(card) card.innerHTML = body.length ? recompCardHtml(recompVerdict(body, sessions, new Date())) : '';
   if(!body.length){
     wrap.innerHTML = `<div class="empty-state"><span class="big">No body data yet</span>Import your Renpho CSV to see body composition trends</div>`;
     return;
